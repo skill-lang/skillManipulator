@@ -1,0 +1,6 @@
+#! ltgc
+
+L {}
+T {
+  map<i32, L, i32> ref;
+}

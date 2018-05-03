@@ -82,4 +82,8 @@ public final class SkillState extends de.ust.skill.common.java.internal.SkillSta
 
         finalizePools(in);
     }
+
+	public ArrayList<StoragePool<?, ?>> getTypes() {
+		return this.types;
+	}
 }
