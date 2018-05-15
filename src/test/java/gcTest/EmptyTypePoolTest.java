@@ -11,13 +11,13 @@ import de.ust.skill.skillManipulator.GarbageCollector;
 import de.ust.skill.skillManipulator.GarbageCollector.CollectionRoot;
 import de.ust.skill.skillManipulator.SkillFile;
 
-class RemoveStringTestCases extends CommonTest{
+class EmptyTypePoolTest extends CommonTest{
 
 	@Test
 	void testReference() throws Exception {
-		Path path = tmpFile("ltgc.simple");
+		Path path = tmpFile("reference");
 
-        SkillFile sf = SkillFile.open("src/test/resources/ltgc/simple.sf");
+        SkillFile sf = SkillFile.open("src/test/resources/EmptyTypePool/Reference/reference.sf");
         sf.changePath(path);
         
         Set<CollectionRoot> roots = new HashSet<>();
@@ -27,15 +27,15 @@ class RemoveStringTestCases extends CommonTest{
         
         sf.close();
         
-        SkillFile sfExpected = SkillFile.open("src/test/resources/ltgc/result.sf");
+        SkillFile sfExpected = SkillFile.open("src/test/resources/EmptyTypePool/Reference/result.sf");
         compareSkillFiles(sfExpected, sf);
 	}
 	
 	@Test
-	void testReferenceWithFlagSet() throws Exception {
-		Path path = tmpFile("ltgc.simple");
+	void testReferenceKeepCollection() throws Exception {
+		Path path = tmpFile("reference.keep");
 
-        SkillFile sf = SkillFile.open("src/test/resources/ltgc/simple.sf");
+        SkillFile sf = SkillFile.open("src/test/resources/EmptyTypePool/Reference/reference.sf");
         sf.changePath(path);
         
         Set<CollectionRoot> roots = new HashSet<>();
@@ -45,15 +45,15 @@ class RemoveStringTestCases extends CommonTest{
         
         sf.close();
         
-        SkillFile sfExpected = SkillFile.open("src/test/resources/ltgc/result.sf");
+        SkillFile sfExpected = SkillFile.open("src/test/resources/EmptyTypePool/Reference/result.sf");
         compareSkillFiles(sfExpected, sf);
 	}
 	
 	@Test
 	void testArray() throws Exception {
-		Path path = tmpFile("ltgca.simple");
+		Path path = tmpFile("array");
 
-        SkillFile sf = SkillFile.open("src/test/resources/ltgca/simple.sf");
+        SkillFile sf = SkillFile.open("src/test/resources/EmptyTypePool/Array/array.sf");
         sf.changePath(path);
         
         Set<CollectionRoot> roots = new HashSet<>();
@@ -63,15 +63,15 @@ class RemoveStringTestCases extends CommonTest{
         
         sf.close();
         
-        SkillFile sfExpected = SkillFile.open("src/test/resources/ltgca/result_without.sf");
+        SkillFile sfExpected = SkillFile.open("src/test/resources/EmptyTypePool/Array/result.sf");
         compareSkillFiles(sfExpected, sf);
 	}
 	
 	@Test
 	void testMap() throws Exception {
-		Path path = tmpFile("ltgcm.simple");
+		Path path = tmpFile("map");
 
-        SkillFile sf = SkillFile.open("src/test/resources/ltgcm/simple.sf");
+        SkillFile sf = SkillFile.open("src/test/resources/EmptyTypePool/Map/map.sf");
         sf.changePath(path);
         
         Set<CollectionRoot> roots = new HashSet<>();
@@ -81,15 +81,15 @@ class RemoveStringTestCases extends CommonTest{
         
         sf.close();
         
-        SkillFile sfExpected = SkillFile.open("src/test/resources/ltgcm/result_without.sf");
+        SkillFile sfExpected = SkillFile.open("src/test/resources/EmptyTypePool/Map/result.sf");
         compareSkillFiles(sfExpected, sf);
 	}
 	
 	@Test
-	void testArrayStays() throws Exception {
-		Path path = tmpFile("ltgca.simple.stays");
+	void testArrayKeepCollection() throws Exception {
+		Path path = tmpFile("array.keep");
 
-        SkillFile sf = SkillFile.open("src/test/resources/ltgca/simple.sf");
+        SkillFile sf = SkillFile.open("src/test/resources/EmptyTypePool/Array/array.sf");
         sf.changePath(path);
         
         Set<CollectionRoot> roots = new HashSet<>();
@@ -99,15 +99,15 @@ class RemoveStringTestCases extends CommonTest{
         
         sf.close();
         
-        SkillFile sfExpected = SkillFile.open("src/test/resources/ltgca/simple.sf");
+        SkillFile sfExpected = SkillFile.open("src/test/resources/EmptyTypePool/Array/array.sf");
         compareSkillFiles(sfExpected, sf);
 	}
 	
 	@Test
-	void testMapStays() throws Exception {
-		Path path = tmpFile("ltgcm.simple.stays");
+	void testMapKeepCollection() throws Exception {
+		Path path = tmpFile("map.keep");
 
-        SkillFile sf = SkillFile.open("src/test/resources/ltgcm/simple.sf");
+        SkillFile sf = SkillFile.open("src/test/resources/EmptyTypePool/Map/map.sf");
         sf.changePath(path);
         
         Set<CollectionRoot> roots = new HashSet<>();
@@ -117,7 +117,25 @@ class RemoveStringTestCases extends CommonTest{
         
         sf.close();
         
-        SkillFile sfExpected = SkillFile.open("src/test/resources/ltgcm/simple.sf");
+        SkillFile sfExpected = SkillFile.open("src/test/resources/EmptyTypePool/Map/map.sf");
+        compareSkillFiles(sfExpected, sf);
+	}
+	
+	@Test
+	void testReferenceVariation() throws Exception {
+		Path path = tmpFile("reference.variation");
+
+        SkillFile sf = SkillFile.open("src/test/resources/EmptyTypePool/Reference/reference_variation.sf");
+        sf.changePath(path);
+        
+        Set<CollectionRoot> roots = new HashSet<>();
+        roots.add(new CollectionRoot("u"));
+        
+        GarbageCollector.run(sf, roots, false, true, true);
+        
+        sf.close();
+        
+        SkillFile sfExpected = SkillFile.open("src/test/resources/EmptyTypePool/Reference/result_variation.sf");
         compareSkillFiles(sfExpected, sf);
 	}
 

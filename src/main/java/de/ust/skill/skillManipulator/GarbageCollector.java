@@ -1,22 +1,18 @@
 package de.ust.skill.skillManipulator;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import de.ust.skill.common.java.api.FieldType;
 import de.ust.skill.common.java.internal.FieldDeclaration;
 import de.ust.skill.common.java.internal.FieldIterator;
 import de.ust.skill.common.java.internal.InterfacePool;
-import de.ust.skill.common.java.internal.LazyField;
 import de.ust.skill.common.java.internal.SkillObject;
 import de.ust.skill.common.java.internal.StoragePool;
 import de.ust.skill.common.java.internal.fieldTypes.MapType;
@@ -24,6 +20,8 @@ import de.ust.skill.common.java.internal.fieldTypes.SingleArgumentType;
 
 /**
  * state of a garbage collection run
+ * 
+ * @author olibroe
  * 
  */
 public class GarbageCollector {
@@ -62,37 +60,29 @@ public class GarbageCollector {
 		}
 	}
 	
-	// TODO probably not useful here
-	static ThreadPoolExecutor pool = new ThreadPoolExecutor(Runtime.getRuntime().availableProcessors(),
-            Runtime.getRuntime().availableProcessors(), 0L, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
-            new ThreadFactory() {
-                @Override
-                public Thread newThread(Runnable r) {
-                    final Thread t = new Thread(r);
-                    t.setDaemon(true);
-                    t.setName("SkillGCThread");
-                    return t;
-                }
-            });
-	
 	// internal implementation of SkillFile is used here to have direct access to types and strings
-	private SkillState state;
+	private final SkillState state;
 	
 	private int totalObjects = 0;
 	
-	private boolean printStatistics;
-	private boolean printProgress;
+	private final boolean printStatistics;
+	private final boolean printProgress;
 
 	// the mark status of all objects is saved in objReachable
 	// to calculate the index of objReachable the skillID is used
 	// the skillID is unique for every root type (super type is null), so we need a type offset for 
 	// all types that are not subtypes of the first root type
 	// calculation of index is: typeOffsets[t.typeID-32] + obj.getSkillID() - 1
-	private int[] typeOffsets;
-	private boolean[] objReachable; 
+	private final int[] typeOffsets;
+	private final BitSet objReachable; 
 	
-	private boolean keepCollectionFields = false;
-	private Set<StoragePool<?, ?>> keepTypes;
+	// if the flag is set all fields that represent collections are not erased if the types have no objects
+	// the keepTypes data structure stores then the types we need for the collections to exist
+	private boolean keepCollectionFields;
+	private Set<StoragePool<?, ?>> keepTypes = new HashSet<>();
+	
+	// fast working data structure to add and remove elements
+	private Deque<SkillObject> workingQueue;
 	
 	/**
 	 * Represents main method of the garbage collection.
@@ -110,71 +100,51 @@ public class GarbageCollector {
 	public static void run(SkillFile sf, Set<CollectionRoot> roots, boolean keepCollectionFields, boolean printStatistics, boolean printProgress) {
 		long start = System.currentTimeMillis();
 		
-		if(printProgress) System.out.println("Starting garbage collection");
-		
 		GarbageCollector gc = new GarbageCollector(sf, keepCollectionFields, printStatistics, printProgress);
+
+		if(printStatistics || printProgress) System.out.println("Starting garbage collection");
 		
 		int rootObjects = 0;
-		
-//		for(int i = 0; i < pool.getMaximumPoolSize(); i++) {
-//			pool.execute(gc.new ProcessObject());
-//		}
 
 		if(roots != null) {
 			for(CollectionRoot root : roots) {
 				StoragePool<?, ?> s = gc.state.pool(root.type);
 				if(s != null) {
 					if(root.id == CollectionRoot.ALL_IDS) {
-						for(SkillObject o : s) {
-
-//							try {
-//								gc.queue.put(o);
-//								// TODO better solution
-//								Thread.sleep(5);
-//								gc.threadsIdle.acquire(pool.getMaximumPoolSize());
-//							} catch (InterruptedException e) {
-//								// TODO Auto-generated catch block
-//								e.printStackTrace();
-//							}
-							
-							
-							
-							gc.processSkillObject(o);
+						for(SkillObject o : s) {	
+							gc.workingQueue.push(o);
+							gc.processSkillObject();
 							rootObjects++;
 						}
 					} else {
 						SkillObject o = s.getByID(root.id);
-						if(o != null) gc.processSkillObject(o);
+						if(o != null) {
+							gc.workingQueue.push(o);
+							gc.processSkillObject();
+							rootObjects++;
+						}
 					}
 				}
 			}
 		}
-		
-		
+
 		if (printStatistics) {
 		      System.out.println("  total objects: " + gc.totalObjects);
 		      System.out.println("  root objects: " + rootObjects);
+		      System.out.println("Collecting done: " + (System.currentTimeMillis() - start));
 		}
-
-		System.out.println("Collecting done: " + (System.currentTimeMillis() - start));
 		
 		gc.removeDeadObjects();		
+
+		gc.removeDeadTypesAndFields();
 		
-		System.out.println("Done removing dead nodes: " + (System.currentTimeMillis() - start));
-		
-		gc.removeDeadTypes();
-		gc.state.Strings().clear();
-		
-		System.out.println("Done removing dead types and fields: " + (System.currentTimeMillis() - start));
-		
-		gc = null;
-		
-		if(printProgress) System.out.println("done. Time: " + (System.currentTimeMillis() - start));
+		if(printStatistics || printProgress) System.out.println("done. Time: " + (System.currentTimeMillis() - start));
 	}
 
 	private GarbageCollector(SkillFile sf, boolean keepCollectionFields, boolean printStatistics, boolean printProgress) {
 		this.state = (SkillState) sf;
 		
+		// types have to be in type order
 		this.typeOffsets = new int[this.state.getTypes().size()];
         for (StoragePool<?,?> t : this.state.getTypes()) {
             if(t.superName() == null) {
@@ -184,47 +154,66 @@ public class GarbageCollector {
             	this.typeOffsets[t.typeID-32] = this.typeOffsets[t.typeID-32-1];
             }
         }	
-        this.objReachable = new boolean[totalObjects];
+        this.objReachable = new BitSet(totalObjects);
           
+    	// TODO initial size tuning
+        this.workingQueue = new ArrayDeque<>(10000);
+        
         this.keepCollectionFields = keepCollectionFields;
-        this.keepTypes = new HashSet<>();
         
         this.printStatistics = printStatistics;
         this.printProgress = printProgress;
         
 	}
 	
-	private void processSkillObject(SkillObject obj) {
-		// get pool
-		StoragePool<?, ?> t = state.pool(obj.skillName());
+	/**
+	 * Takes Object from the queue, marks it and processes its fields with processFields method.
+	 * If there are object references in the fields, they are added to the queue.
+	 * 
+	 * Shortly: Take starting object and run through all childs to mark them
+	 */
+	private void processSkillObject() {
+		while(!workingQueue.isEmpty()) {
+			// get next object
+			SkillObject obj = workingQueue.pop();
 
-		//mark node
-		objReachable[typeOffsets[t.typeID-32] + obj.getSkillID() - 1] = true;
+			// get pool
+			StoragePool<?, ?> type = state.pool(obj.skillName());
 
-		// visit all fields of that node
-		FieldIterator fit = t.allFields();
+			//mark node
+			objReachable.set(typeOffsets[type.typeID-32] + obj.getSkillID() - 1);
 
-		while(fit.hasNext()) {
-			FieldDeclaration<?,?> f = fit.next();
-			if(!ignoreType(f.type())) {
-				Object o = f.get(obj);				
-				if(o != null) {
-					processField(f.type(), o);
+			// visit all fields of that node
+			FieldIterator fit = type.allFields();
+			FieldDeclaration<?,?> f;
+			Object o;
+
+			while(fit.hasNext()) {
+				f = fit.next();
+				if(!ignoreType(f.type())) {
+					o = f.get(obj);				
+					if(o != null) {
+						processField(f.type(), o);
+					}
 				}
 			}
-
 		}
 	}
 	
 	private void processField(FieldType<?> t, Object o) {
-		int id = t.typeID();
-		if (15 <= id && id <= 19) {
+		switch(t.typeID()) {
+		case 15:
+		case 16:
+		case 17:
+		case 18:
+		case 19:
 			// linear collection
 			FieldType<?> bt = ((SingleArgumentType<?, ?>)t).groundType;
 			for(Object i : (Iterable<?>)o) {
 				processField(bt, i);
 			}
-		} else if (20 == id) {
+			break;
+		case 20:
 			// map
 			MapType<?, ?> mt = (MapType<?, ?>)t; 
 			boolean followKey = !ignoreType(mt.keyType);
@@ -233,94 +222,81 @@ public class GarbageCollector {
 				if(followKey) processField(mt.keyType, i.getKey());
 				if(followVal) processField(mt.valueType, i.getValue());
 			}
-		} else {
+			break;
+		default:
 			// ref
 			SkillObject ref = (SkillObject)o;
 			if(ref == null || ref.isDeleted()) {
 				return;
 			}
-			if (!objReachable[typeOffsets[id-32] + ref.getSkillID() - 1]) {
-				processSkillObject(ref);
-			}
+			if (!objReachable.get(typeOffsets[t.typeID()-32] + ref.getSkillID() - 1)) {
+				workingQueue.push(ref);
+			}	
 		}
 	}
 	
+	/**
+	 * Remove all dead objects (objects that are not marked in the previous step)
+	 * Since the root types know all objects of themselves and their subtypes it is 
+	 * sufficient to loop over their objects (superName() == null)
+	 */
 	private void removeDeadObjects() {
-		int reachable = objReachable.length;
 		for(StoragePool<?,?> t : state.getTypes()) {
 			if(t.superName() == null) 
 				for(SkillObject o : t) 
-					if(!o.isDeleted() && !objReachable[typeOffsets[t.typeID-32] + o.getSkillID() - 1]) {
+					if(!o.isDeleted() && !objReachable.get(typeOffsets[t.typeID-32] + o.getSkillID() - 1)) {
 						if(printProgress) System.out.println("delete: " + o);
-						reachable--;
 						state.delete(o);
 					}
 		}
-		if (printStatistics) {
-			System.out.println("  reachable: " + reachable);
-		}
+		
+		if (printStatistics) System.out.println("  reachable: " + objReachable.cardinality());
 	}
 
-
-	private void removeDeadTypes() {		
+	/**
+	 * Remove Dead Types and Fields
+	 * Dead means:
+	 * - for a field: it is not possible to store information in this field
+	 *   (for example: a reference to a type and there are no objects of this type existing)
+	 * - for a type: there are no objects of this type
+	 * When removing types or fields, one has to reorder them and refresh their IDs.
+	 */
+	private void removeDeadTypesAndFields() {		
 		ArrayList<StoragePool<?, ?>> types = state.getTypes();
-		
-		ArrayList<StoragePool<?, ?>> rtypes = new ArrayList<>();
-		ArrayList<StoragePool<?, ?>> irrtypes = new ArrayList<>();
 
 		StoragePool.fixed(types);
 		
-		for (StoragePool<?, ?>  s : types) {
-			ArrayList<FieldDeclaration<?, ?>> rFields = new ArrayList<>();
+		for (StoragePool<?, ?>  type : types) {
 			ArrayList<FieldDeclaration<?, ?>> irrFields = new ArrayList<>();
 
-			for (FieldDeclaration<?, ?> f : s.dataFields) {
-				if (keepField(f.type())) {
-					rFields.add(f);
-				} else {
-					irrFields.add(f);
-				}
+			for (FieldDeclaration<?, ?> field : type.dataFields) {
+				if(!keepField(field.type())) irrFields.add(field);
 			}
 
 			if (irrFields.size() > 0) {
-				s.dataFields.clear();
-				int nextID = 1;
-				for (FieldDeclaration<?, ?> f : rFields) {
-					f.index = nextID;
-					s.addField(f);
-					++nextID;
-				}
+				type.dataFields.removeAll(irrFields);
+				FieldUtils.reorderFields(type);
 			}
 		}
 		
-		
+		// keep type if there are objects of this type or we need the type for a collection
+		ArrayList<StoragePool<?, ?>> irrtypes = new ArrayList<>();
 		for (StoragePool<?, ?> pool : types) {
-			if (pool.size() > 0)
-				rtypes.add(pool);
-			else
-				irrtypes.add(pool);
+			if(pool.size() == 0 && !keepTypes.contains(pool)) irrtypes.add(pool);
 		}
 		
-		for(StoragePool<?, ?> s : keepTypes) { 
-			if(!rtypes.contains(s)) rtypes.add(s);
-		}
-		irrtypes.removeAll(keepTypes);
-		
+		// if there are types we want to delete, we have to reorder the types
 		if (irrtypes.size() > 0) {
-			types.clear();
-			int nextID = 32;
-			for (StoragePool<?, ?>  s : rtypes) {
-				s.typeID = nextID;
-				++nextID;
-				types.add(s);
-				s.setNextPool(null);
-			}	
-			
-		
-			StoragePool.establishNextPools(types);
+			types.removeAll(irrtypes);
+			TypeUtils.reorderTypes(state);
 		}		
 		
 		StoragePool.unfix(types);
+		
+		// renew StringPool
+		state.Strings().clear();
+		state.collectStrings();
+		System.out.println(state.Strings().size());
 	}
 	
 	private boolean keepField(FieldType<?> t) {
@@ -378,99 +354,5 @@ public class GarbageCollector {
 		} else {
 			return false;
 		}
-	}
-	
-	private BlockingQueue<SkillObject> queue = new LinkedBlockingQueue<>(pool.getMaximumPoolSize()/2);
-	private Semaphore threadsIdle = new Semaphore(pool.getMaximumPoolSize());
-	
-	class ProcessObject implements Runnable {
-//		private SkillObject obj;
-//		
-//		ProcessObject(SkillObject obj) {
-//			this.obj = obj;
-//			jobCount.incrementAndGet();
-//		}
-		
-		@Override
-		public void run() {
-			SkillObject take;
-			while(true) {
-				try {
-					take = queue.take();
-					threadsIdle.acquire();
-					processSkillObject(take);
-					threadsIdle.release();
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		}
-		
-		private void processSkillObject(SkillObject obj) {
-			// get pool
-			StoragePool<?, ?> t = state.pool(obj.skillName());
-			
-			if(objReachable[typeOffsets[t.typeID-32] + obj.getSkillID() - 1]) return;
-			
-			//mark node
-			objReachable[typeOffsets[t.typeID-32] + obj.getSkillID() - 1] = true;
-			
-			// visit all fields of that node
-			FieldIterator fit = t.allFields();
-			
-			while(fit.hasNext()) {
-				FieldDeclaration<?,?> f = fit.next();
-				if(!ignoreType(f.type())) {
-					Object o;
-					if(f instanceof LazyField<?, ?>) {
-						synchronized(state) {
-							o = f.get(obj);		
-						}
-					} else {
-						o = f.get(obj);	
-					}
-					if(o != null) {
-						processField(f.type(), o);
-					}
-				}
-
-			}
-		}
-		
-		private void processField(FieldType<?> t, Object o) {
-			int id = t.typeID();
-			if (15 <= id && id <= 19) {
-				// linear collection
-				FieldType<?> bt = ((SingleArgumentType<?, ?>)t).groundType;
-				for(Object i : (Iterable<?>)o) {
-					processField(bt, i);
-				}
-			} else if (20 == id) {
-				// map
-				MapType<?, ?> mt = (MapType<?, ?>)t; 
-				boolean followKey = !ignoreType(mt.keyType);
-				boolean followVal = !ignoreType(mt.valueType);
-				for(Map.Entry<?, ?> i : ((HashMap<?, ?>) o).entrySet()) {
-					if(followKey) processField(mt.keyType, i.getKey());
-					if(followVal) processField(mt.valueType, i.getValue());
-				}
-			} else {
-				// ref
-				SkillObject ref = (SkillObject)o;
-				if (ref != null && !objReachable[typeOffsets[id-32] + ref.getSkillID() - 1]) {
-//					if(pool.getActiveCount() < 0) {
-//						pool.execute(new ProcessObject(ref));
-//					} else {
-//						processSkillObject(ref);
-//					}
-					if(!queue.offer(ref)) {
-						processSkillObject(ref);
-					}
-					//queue.add(ref);
-				}
-			}
-		}
-		
 	}
 }

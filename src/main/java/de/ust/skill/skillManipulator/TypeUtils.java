@@ -1,34 +1,41 @@
 package de.ust.skill.skillManipulator;
 
-import de.ust.skill.common.java.api.Access;
+import java.util.ArrayList;
+
 import de.ust.skill.common.java.internal.SkillObject;
+import de.ust.skill.common.java.internal.StoragePool;
 
 public class TypeUtils {
-	static void deleteType(SkillFile sf, Access<?> type) {
-		System.out.println("deleting type '" + type.name() + "'");
-		for(Access<?> t : sf.allTypes()) {
-			if(t.equals(type)) {
-				for(SkillObject o : t) {
-					sf.delete(o);
-				}
-			}
+	static void deleteType(SkillFile sf, StoragePool<?,?> type) {
+		// delete all objects of type
+		for(SkillObject o : type) {
+			sf.delete(o);
 		}
+		
+		// reorder types to remove type from list
+		reorderTypes((SkillState) sf);
 	}
 	
-	static void deleteType(SkillFile sf, String type) {
-		Access<?> t = getType(sf, type);
-		if(t != null) {
-			deleteType(sf, t);
+	public static void reorderTypes(SkillState state) {
+		ArrayList<StoragePool<?, ?>> types = state.getTypes();
+		int nextID = 32;
+		for (StoragePool<?, ?>  s : types) {
+			s.typeID = nextID;
+			++nextID;
+			s.setNextPool(null);
 		}
+		
+		StoragePool.establishNextPools(types);
 	}
-	
-	static Access<?> getType(SkillFile sf, String type) {
-		for(Access<?> t : sf.allTypes()) {
-			if(t.name().equals(type)) {
-				return t;
-			}
+
+	static boolean deleteType(SkillFile sf, String type) {
+		StoragePool<?, ?> pool = ((SkillState)sf).pool(type);
+		if(pool == null) {
+			return false;
+		} else {
+			deleteType((SkillState) sf, pool);
+			return true;
 		}
-		return null;
 	}
 
 }

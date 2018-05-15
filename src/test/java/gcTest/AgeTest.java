@@ -5,13 +5,13 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import common.CommonTest;
 import de.ust.skill.skillManipulator.GarbageCollector;
-import de.ust.skill.skillManipulator.SkillFile;
 import de.ust.skill.skillManipulator.GarbageCollector.CollectionRoot;
+import de.ust.skill.skillManipulator.SkillFile;
 
 class AgeTest extends CommonTest{
 	
@@ -29,12 +29,13 @@ class AgeTest extends CommonTest{
    
         sf.close();
         
-        Assert.assertTrue(sha256(path).equals(sha256(new File("src/test/resources/age/age-example.sf").toPath())));
+        SkillFile sfExpected = SkillFile.open("src/test/resources/age/age-example.sf");
+        compareSkillFiles(sfExpected, sf);
 	}
 	
 	@Test
-	void testDeleteOneObject() throws Exception {
-		Path path = tmpFile("age-example.delete.one");
+	void testDeleteSecondObject() throws Exception {
+		Path path = tmpFile("age-example.delete.second");
 
         SkillFile sf = SkillFile.open("src/test/resources/age/age-example.sf");
         sf.changePath(path);
@@ -46,7 +47,26 @@ class AgeTest extends CommonTest{
         
         sf.close();
 
-        Assert.assertTrue(sha256(path).equals(sha256(new File("src/test/resources/age/age-example-delete-one.sf").toPath())));
+        SkillFile sfExpected = SkillFile.open("src/test/resources/age/age-example-delete-second.sf");
+        compareSkillFiles(sfExpected, sf);
+	}
+	
+	@Test
+	void testDeleteFirstObject() throws Exception {
+		Path path = tmpFile("age-example.delete.first");
+
+        SkillFile sf = SkillFile.open("src/test/resources/age/age-example.sf");
+        sf.changePath(path);
+        
+        Set<CollectionRoot> roots = new HashSet<>();
+        roots.add(new CollectionRoot("age",2));
+
+        GarbageCollector.run(sf, roots, false, true, true);
+        
+        sf.close();
+
+        SkillFile sfExpected = SkillFile.open("src/test/resources/age/age-example-delete-first.sf");
+        compareSkillFiles(sfExpected, sf);
 	}
 	
 	@Test
@@ -60,7 +80,12 @@ class AgeTest extends CommonTest{
 
         sf.close();
 
-        Assert.assertTrue(sha256(path).equals(sha256(new File("src/test/resources/empty-file.sf").toPath())));
+        SkillFile sfExpected = SkillFile.open("src/test/resources/empty-file.sf");
+        compareSkillFiles(sfExpected, sf);
+        
+        // empty SkillFile expected, therefore binary equality possible
+        // empty SkillFile is 2 Bytes zeros
+        Assertions.assertEquals(sha256(path), sha256(new File("src/test/resources/empty-file.sf").toPath()));
 	}
 	
 	@Test
@@ -71,14 +96,15 @@ class AgeTest extends CommonTest{
         sf.changePath(path);
         
         Set<CollectionRoot> roots = new HashSet<>();
-        roots.add(new CollectionRoot("age",1));
+        roots.add(new CollectionRoot("age"));
         
         GarbageCollector.run(sf, roots, false, true, true);
         GarbageCollector.run(sf, roots, false, true, true);
         
         sf.close();
 
-        Assert.assertTrue(sha256(path).equals(sha256(new File("src/test/resources/age/age-example-delete-one.sf").toPath())));
+        SkillFile sfExpected = SkillFile.open("src/test/resources/age/age-example.sf");
+        compareSkillFiles(sfExpected, sf);
 	}
 
 }
