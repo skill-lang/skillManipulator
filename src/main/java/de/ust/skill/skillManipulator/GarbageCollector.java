@@ -100,12 +100,14 @@ public class GarbageCollector {
 	public static void run(SkillFile sf, Set<CollectionRoot> roots, boolean keepCollectionFields, boolean printStatistics, boolean printProgress) {
 		long start = System.currentTimeMillis();
 		
+		// create garbage collection object
 		GarbageCollector gc = new GarbageCollector(sf, keepCollectionFields, printStatistics, printProgress);
 
 		if(printStatistics || printProgress) System.out.println("Starting garbage collection");
 		
 		int rootObjects = 0;
 
+		// loop over roots and process them
 		if(roots != null) {
 			for(CollectionRoot root : roots) {
 				StoragePool<?, ?> s = gc.state.pool(root.type);
@@ -133,9 +135,11 @@ public class GarbageCollector {
 		      System.out.println("  root objects: " + rootObjects);
 		      System.out.println("Collecting done: " + (System.currentTimeMillis() - start));
 		}
-		
+
+		// remove dead objects, that are not reachable from the root objects
 		gc.removeDeadObjects();		
 
+		// remove types and fields that are not used
 		gc.removeDeadTypesAndFields();
 		
 		if(printStatistics || printProgress) System.out.println("done. Time: " + (System.currentTimeMillis() - start));
@@ -156,7 +160,6 @@ public class GarbageCollector {
         }	
         this.objReachable = new BitSet(totalObjects);
           
-    	// TODO initial size tuning
         this.workingQueue = new ArrayDeque<>(10000);
         
         this.keepCollectionFields = keepCollectionFields;
@@ -200,6 +203,14 @@ public class GarbageCollector {
 		}
 	}
 	
+	/**
+	 * Process field of given field type and value.
+	 * If the field is a reference to another SkillObject, we have to process the object.
+	 * References can also be in collection types.
+	 *
+	 * @param t - field type
+	 * @param o - value of the field
+	 */
 	private void processField(FieldType<?> t, Object o) {
 		switch(t.typeID()) {
 		case 15:
@@ -238,11 +249,11 @@ public class GarbageCollector {
 	/**
 	 * Remove all dead objects (objects that are not marked in the previous step)
 	 * Since the root types know all objects of themselves and their subtypes it is 
-	 * sufficient to loop over their objects (superName() == null)
+	 * sufficient to loop over their objects (superPool == null)
 	 */
 	private void removeDeadObjects() {
 		for(StoragePool<?,?> t : state.getTypes()) {
-			if(t.superName() == null) 
+			if(t.superPool == null)
 				for(SkillObject o : t) 
 					if(!o.isDeleted() && !objReachable.get(typeOffsets[t.typeID-32] + o.getSkillID() - 1)) {
 						if(printProgress) System.out.println("delete: " + o);
@@ -261,11 +272,14 @@ public class GarbageCollector {
 	 * - for a type: there are no objects of this type
 	 * When removing types or fields, one has to reorder them and refresh their IDs.
 	 */
-	private void removeDeadTypesAndFields() {		
+	private void removeDeadTypesAndFields() {
+		// get list of all types
 		ArrayList<StoragePool<?, ?>> types = state.getTypes();
 
+		// fix types to have faster size operations
 		StoragePool.fixed(types);
 		
+		// step through the fields of all types and remove unneeded fields
 		for (StoragePool<?, ?>  type : types) {
 			ArrayList<FieldDeclaration<?, ?>> irrFields = new ArrayList<>();
 
@@ -291,14 +305,20 @@ public class GarbageCollector {
 			TypeUtils.reorderTypes(state);
 		}		
 		
+		// unfix types
 		StoragePool.unfix(types);
 		
 		// renew StringPool
 		state.Strings().clear();
 		state.collectStrings();
-		System.out.println(state.Strings().size());
 	}
 	
+	/**
+	 * Returns true if the given field type is needed.
+	 *
+	 * @param t - type of field
+	 * @return true if needed, otherwise false
+	 */
 	private boolean keepField(FieldType<?> t) {
 		// basic types
 		if(t.typeID() < 15) {
@@ -340,17 +360,29 @@ public class GarbageCollector {
 			return (keepField(((MapType<?, ?>)t).keyType) && keepField(((MapType<?, ?>)t).valueType));
 		}
 		
+		// should not be reached
 		return false;
 	}
 
+	/**
+	 * Returns true if we can ignore the given field type.
+	 * This is the case for all non-user types, because we only want to remove dead SkillObjects.
+	 *
+	 * @param t - type of field
+	 * @return true if type can be ignored, otherwise false
+	 */
 	private boolean ignoreType(FieldType<?> t) {
 		int id = t.typeID();
-		if (id <= 14 && id != 5) {
+		// simple data types
+		if (id <= 14) {
 			return true;
+		// linear collections
 		} else if (15 <= id && id <= 19) {
 			return ignoreType(((SingleArgumentType<?, ?>)t).groundType);
+		// maps
 		} else if (20 == id) {
 			return ignoreType(((MapType<?, ?>)t).keyType) && ignoreType(((MapType<?, ?>)t).valueType);
+		// user types
 		} else {
 			return false;
 		}
