@@ -6,24 +6,26 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
-
-import de.ust.skill.common.java.api.Access;
+	
 import de.ust.skill.common.java.api.StringAccess;
 import de.ust.skill.common.java.internal.FieldDeclaration;
 import de.ust.skill.common.java.internal.FieldIterator;
-import de.ust.skill.common.java.internal.LazyField;
 import de.ust.skill.common.java.internal.SkillObject;
+import de.ust.skill.common.java.internal.StaticFieldIterator;
+import de.ust.skill.common.java.internal.StoragePool;
 import de.ust.skill.skillManipulator.SkillFile;
+import de.ust.skill.skillManipulator.SkillState;
 
 public abstract class CommonTest {
 
 	protected static Path tmpFile(String string) throws Exception {
         File r = File.createTempFile(string, ".sf");
-        // r.deleteOnExit();
+        r.deleteOnExit();
         return r.toPath();
     }
 	
@@ -38,52 +40,57 @@ public abstract class CommonTest {
 	    	sb.append(String.format("%02X", b));
 	    return sb.toString();
 	}
-	
+		
 	protected static void compareSkillFiles(SkillFile sfExpected, SkillFile sfActual) {
-		compareTypes(sfExpected.allTypes(), sfActual.allTypes());
+		SkillState expectedState = (SkillState) sfExpected;
+		SkillState actualState = (SkillState) sfActual;
 		
-		compareSkillObjects(sfExpected, sfActual);
+		compareTypes(expectedState, actualState);
 		
-		compareStringPools(sfExpected.Strings(), sfActual.Strings());
+		compareSkillObjects(expectedState, actualState);
+		
+		compareStringPools(expectedState, actualState);
 	}
-
-	private static void compareSkillObjects(SkillFile sfExpected, SkillFile sfActual) {
-		Iterator<? extends Access<? extends SkillObject>> actualTypesIt = sfActual.allTypes().iterator();
+	
+	private static void compareSkillObjects(SkillState expectedState, SkillState actualState) {	
+		ArrayList<StoragePool<?, ?>> expectedTypes = expectedState.getTypes();
+		ArrayList<StoragePool<?, ?>> actualTypes = actualState.getTypes();
 		
-		for(Access<? extends SkillObject> typeExpected : sfExpected.allTypes()) {
-			Access<? extends SkillObject> typeActual = actualTypesIt.next();
-			Iterator<? extends SkillObject> actualObjectsIt = typeActual.iterator();
+		for(int i = 0; i < expectedTypes.size(); i++) {
+			StoragePool<?, ?> expectedType = expectedTypes.get(i);
+			StoragePool<?, ?> actualType = actualTypes.get(i);
 			
-			for(SkillObject objExpected : typeExpected) {
-				SkillObject objActual = actualObjectsIt.next();
-				Assertions.assertEquals(objExpected.skillName(), objActual.skillName());
+			StaticFieldIterator fitExpected = expectedType.fields();
+			StaticFieldIterator fitActual = actualType.fields();
+			while(fitExpected.hasNext()) {
+				FieldDeclaration<?, ?> fieldExp = fitExpected.next();
+				FieldDeclaration<?, ?> fieldAct = fitActual.next();
 				
-				FieldIterator fitExpected = typeExpected.allFields();
-				FieldIterator fitActual = typeActual.allFields();
-				while(fitExpected.hasNext()) {
-					FieldDeclaration<?, ?> fieldExp = fitExpected.next();
-					FieldDeclaration<?, ?> fieldAct = fitActual.next();
+				Iterator<? extends SkillObject> expectedObjectsIt = expectedType.iterator();
+				Iterator<? extends SkillObject> actualObjectsIt = actualType.iterator();
+				while(expectedObjectsIt.hasNext()) {
+					SkillObject expObj = expectedObjectsIt.next();
+					Assertions.assertTrue(actualObjectsIt.hasNext(), "Actual SkillFile misses " + expObj);	
+					SkillObject actObj = actualObjectsIt.next();
+					Assertions.assertEquals(expObj.skillName(), actObj.skillName());
 					
-					if(fieldExp instanceof LazyField<?, ?>) {
-						((LazyField<?, ?>)fieldExp).ensureLoaded();
-					}
-					if(fieldAct instanceof LazyField<?, ?>) {
-						((LazyField<?, ?>)fieldAct).ensureLoaded();
-					}
-					
-					Object dataExpected = fieldExp.get(objExpected);
-					Object dataActual = fieldAct.get(objActual);
-					if(!objectsEqual(dataExpected, dataActual)) {
-						fail("SkillObjects " + objExpected + " and " + objActual + " differ in field " + fieldExp.name() + " (" + dataExpected + "; " + dataActual + ")");
+					if(!expObj.isDeleted() && !actObj.isDeleted()) {
+						Object dataExpected = fieldExp.get(expObj);
+						Object dataActual = fieldAct.get(actObj);
+						if(!objectsEqual(dataExpected, dataActual)) {
+							fail("SkillObjects " + expObj + " and " + actObj + " differ in field " + fieldExp.name() + " (" + dataExpected + "; " + dataActual + ")");
+						}
 					}
 				}
 			}
 		}
-		
 	}
 
 	private static boolean objectsEqual(Object dataExpected, Object dataActual) {
 		if(null == dataExpected && null == dataActual) {
+			return true;
+		}
+		if(null == dataExpected && dataActual instanceof SkillObject && ((SkillObject)dataActual).isDeleted()) {
 			return true;
 		}
 		if(dataExpected instanceof Comparable<?>) {
@@ -101,7 +108,7 @@ public abstract class CommonTest {
 				if(!objFound) return false;
 			}
 			return true;
-		} else if(dataExpected instanceof Map<?, ?>) {
+		} else if(dataExpected instanceof Map<?, ?>) {			
 			return ((Map<?, ?>)dataExpected).equals((Map<?, ?>)dataActual);
 		} else {
 			System.out.println(dataExpected);
@@ -110,18 +117,20 @@ public abstract class CommonTest {
 		
 	}
 
-	private static void compareTypes(Iterable<? extends Access<? extends SkillObject>> expectedTypes,
-			Iterable<? extends Access<? extends SkillObject>> actualTypes) {
-		Iterator<? extends Access<? extends SkillObject>> expIt = expectedTypes.iterator();
-		Iterator<? extends Access<? extends SkillObject>> actIt = actualTypes.iterator();
-		while(expIt.hasNext()) {
-			Assertions.assertTrue(actIt.hasNext());
-			Access<? extends SkillObject> expType = expIt.next();
-			Access<? extends SkillObject> actType = actIt.next();
-			Assertions.assertEquals(expType.toString(), actType.toString());
-			compareFields(expType.allFields(), actType.allFields());
+	private static void compareTypes(SkillState stateExpected, SkillState stateActual) {
+		ArrayList<StoragePool<?,?>> typesExpected = stateExpected.getTypes();
+		ArrayList<StoragePool<?,?>> typesActual = stateActual.getTypes();
+		
+		Assertions.assertEquals(typesExpected.size(), typesActual.size());
+		for(int i = 0; i < typesExpected.size(); i++) {
+			StoragePool<?, ?> expectedType = typesExpected.get(i);
+			StoragePool<?, ?> actualType = typesActual.get(i);
+			Assertions.assertEquals(expectedType.typeID, actualType.typeID);
+			Assertions.assertEquals(expectedType.name(), actualType.name());
+			Assertions.assertEquals(expectedType.size(), actualType.size());
+			compareFields(expectedType.allFields(), actualType.allFields());
 		}
-		Assertions.assertFalse(actIt.hasNext());
+		
 	}
 
 	private static void compareFields(FieldIterator expFieldsIt, FieldIterator actFieldsIt) {
@@ -129,14 +138,16 @@ public abstract class CommonTest {
 			Assertions.assertTrue(actFieldsIt.hasNext());
 			FieldDeclaration<?, ?> expField = expFieldsIt.next();
 			FieldDeclaration<?, ?> actField = actFieldsIt.next();
-			Assertions.assertEquals(expField.type().toString(), actField.type().toString());
-			Assertions.assertEquals(expField.toString(), actField.toString());
+			Assertions.assertEquals(expField, actField);
 			Assertions.assertIterableEquals(expField.restrictions, actField.restrictions);
 		}
 		Assertions.assertFalse(actFieldsIt.hasNext());
 	}
 
-	private static void compareStringPools(StringAccess expectedStrings, StringAccess actualStrings) {
+	private static void compareStringPools(SkillState stateExpected, SkillState stateActual) {
+		stateExpected.collectStrings();
+		StringAccess expectedStrings = stateExpected.Strings();
+		StringAccess actualStrings = stateActual.Strings();
 		Assertions.assertEquals(expectedStrings.size(), actualStrings.size());
 		for(String s : expectedStrings) {
 			Assertions.assertTrue(actualStrings.contains(s), "String " + s + " not found");
