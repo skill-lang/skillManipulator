@@ -1,20 +1,13 @@
 package de.ust.skill.skillManipulator;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 import de.ust.skill.common.java.internal.SkillObject;
 import de.ust.skill.common.java.internal.StoragePool;
 
 public class TypeUtils {
-	static void deleteType(SkillFile sf, StoragePool<?,?> type) {
-		// delete all objects of type
-		for(SkillObject o : type) {
-			sf.delete(o);
-		}
-		
-		// reorder types to remove type from list
-		reorderTypes((SkillState) sf);
-	}
 	
 	public static void reorderTypes(SkillState state) {
 		ArrayList<StoragePool<?, ?>> types = state.getTypes();
@@ -28,12 +21,42 @@ public class TypeUtils {
 		StoragePool.establishNextPools(types);
 	}
 
-	static boolean deleteType(SkillFile sf, String type) {
-		StoragePool<?, ?> pool = ((SkillState)sf).pool(type);
+	public static void deleteType(SkillState state, StoragePool<?,?> type) {
+		ArrayList<StoragePool<?, ?>> types = state.getTypes();
+
+		Set<StoragePool<?, ?>> deleteTypes = new HashSet<>();
+		deleteTypes.add(type);
+
+		for(SkillObject o : type) {
+			state.delete(o);
+		}
+
+		// TODO remove subtypes ? 
+		// remove all subtypes
+		for(StoragePool<?, ?> t : types) {
+			if(deleteTypes.contains(t.superPool)) {
+				deleteTypes.add(t);
+			}
+		}
+
+		for(StoragePool<?, ?> t : deleteTypes)
+			FieldUtils.removeAllFieldsOfType(state, t.typeID);
+
+		// removes types we want to remove
+		types.removeAll(deleteTypes);
+
+		reorderTypes(state);
+	}
+
+
+	public static boolean deleteType(SkillFile sf, String type) {
+		SkillState state = (SkillState)sf;
+		StoragePool<?, ?> pool = state.pool(type);
+
 		if(pool == null) {
 			return false;
 		} else {
-			deleteType((SkillState) sf, pool);
+			deleteType(state, pool);
 			return true;
 		}
 	}
