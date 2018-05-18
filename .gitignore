@@ -1,3 +1,5 @@
 .classpath
 .settings/
 bin/
+output/
+.attach_pid*
