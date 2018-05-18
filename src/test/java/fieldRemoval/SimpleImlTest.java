@@ -40,5 +40,35 @@ class SimpleImlTest extends CommonTest{
         SkillFile sfExpected = SkillFile.open("src/test/resources/simpleIml/simpleIml-removed-pathname-of-sloc.sf");
         compareSkillFiles(sfExpected, sf);
 	}
+	
+	@Test
+	void testRemoveSlocOfImlroot() throws Exception {
+		Path path = tmpFile("simple.iml.remove.sloc");
+
+        SkillFile sf = SkillFile.open("src/test/resources/simpleIml/simple.iml.sf");
+        sf.changePath(path);
+        
+        Assertions.assertTrue(FieldUtils.removeField(sf, "sloc", "imlroot"));
+        
+        sf.close();
+        
+        SkillFile sfExpected = SkillFile.open("src/test/resources/simpleIml/simpleIml-removed-sloc-of-imlroot.sf");
+        compareSkillFiles(sfExpected, sf);
+	}
+	
+	@Test
+	void testRemoveNodeIdFail() throws Exception {
+		Path path = tmpFile("simple.iml.remove.nodeid");
+
+        SkillFile sf = SkillFile.open("src/test/resources/simpleIml/simple.iml.sf");
+        sf.changePath(path);
+        
+        Assertions.assertFalse(FieldUtils.removeField(sf, "nodeid", "imlroot"));
+        
+        sf.close();
+        
+        SkillFile sfExpected = SkillFile.open("src/test/resources/simpleIml/simple.iml.sf");
+        compareSkillFiles(sfExpected, sf);
+	}
 
 }
