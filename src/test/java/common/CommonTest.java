@@ -9,6 +9,7 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.junit.jupiter.api.Assertions;
 	
@@ -25,7 +26,7 @@ public abstract class CommonTest {
 
 	protected static Path tmpFile(String string) throws Exception {
         File r = File.createTempFile(string, ".sf");
-        r.deleteOnExit();
+//        r.deleteOnExit();
         return r.toPath();
     }
 	
@@ -109,7 +110,16 @@ public abstract class CommonTest {
 			}
 			return true;
 		} else if(dataExpected instanceof Map<?, ?>) {			
-			return ((Map<?, ?>)dataExpected).equals((Map<?, ?>)dataActual);
+			for(Entry<?, ?> entryExp : ((Map<?, ?>) dataExpected).entrySet()) {
+				boolean objFound = false;
+				for(Entry<?, ?> entryAct : ((Map<?, ?>) dataActual).entrySet()) {
+					if(objectsEqual(entryExp.getKey(), entryAct.getKey())) {
+						objFound = objectsEqual(entryExp.getValue(), entryAct.getValue());
+					}
+				}
+				if(!objFound) return false;
+			}
+			return true;
 		} else {
 			System.out.println(dataExpected);
 		}
@@ -146,6 +156,7 @@ public abstract class CommonTest {
 
 	private static void compareStringPools(SkillState stateExpected, SkillState stateActual) {
 		stateExpected.collectStrings();
+		stateActual.collectStrings();
 		StringAccess expectedStrings = stateExpected.Strings();
 		StringAccess actualStrings = stateActual.Strings();
 		Assertions.assertEquals(expectedStrings.size(), actualStrings.size());
