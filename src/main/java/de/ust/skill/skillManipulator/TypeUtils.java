@@ -27,18 +27,20 @@ public class TypeUtils {
 		Set<StoragePool<?, ?>> deleteTypes = new HashSet<>();
 		deleteTypes.add(type);
 
+		// delete all objetcs of type
 		for(SkillObject o : type) {
 			state.delete(o);
 		}
 
-		// TODO remove subtypes ? 
-		// remove all subtypes
+		// add all subtypes to remove them too
+		// note: type order is important here
 		for(StoragePool<?, ?> t : types) {
 			if(deleteTypes.contains(t.superPool)) {
 				deleteTypes.add(t);
 			}
 		}
 
+		// delete all fields of the types we want to delete
 		for(StoragePool<?, ?> t : deleteTypes)
 			FieldUtils.removeAllFieldsOfType(state, t.typeID);
 
