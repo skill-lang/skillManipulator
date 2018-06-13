@@ -1,7 +1,11 @@
 package de.ust.skill.skillManipulator;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import de.ust.skill.common.java.internal.FieldDeclaration;
 import de.ust.skill.common.java.internal.FieldIterator;
+import de.ust.skill.common.java.internal.SkillObject;
 import de.ust.skill.common.java.internal.StoragePool;
 
 /**
@@ -87,16 +91,40 @@ public class FieldUtils {
 	public static void removeAllFieldsOfType(SkillFile sf, int typeID) {
 		SkillState state = (SkillState)sf;
 		
+		// set to collect fields to delete
+		Set<FieldDeclaration<?, ?>> fieldToDelete = new HashSet<>();
 		for(StoragePool<?, ?> t : state.getTypes()) {
-			boolean foundField = false;
-			for(int i = 0; i < t.dataFields.size(); i++) {
-				if(t.dataFields.get(i).type().typeID == typeID) {
-					t.dataFields.remove(i);
-					foundField = true;
+			fieldToDelete.clear();
+			for(FieldDeclaration<?, ?> f : t.dataFields) {
+				if(f.type().typeID == typeID) {
+					fieldToDelete.add(f);
 				}
 			}
-			if(foundField) reorderFields(t);
+			if(!fieldToDelete.isEmpty()) {
+				t.dataFields.removeAll(fieldToDelete);
+				reorderFields(t);
+			}
 		}
 
+	}
+	
+	@SuppressWarnings("unchecked")
+	protected static <T> void setDefaultValues(FieldDeclaration<T, ?> newField) {
+		// TODO future work: if the implementation of default value is ready, supply default here
+
+		int id = newField.type().typeID;
+		Object value;
+		
+		// take minimum data type to prevent class cast exception
+		// integer types
+		if(7 <= id && id <= 11) value = (byte) 0;
+		// float types
+		else if(id == 12 || id == 13) value = (float)0.0;
+		// others
+		else value = null;
+		
+		for(SkillObject o : newField.owner()) {
+			newField.set(o, (T)value);
+		}
 	}
 }

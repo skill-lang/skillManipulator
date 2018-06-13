@@ -6,6 +6,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import de.ust.skill.common.java.api.SkillException;
+import de.ust.skill.common.java.internal.FieldDeclaration;
+import de.ust.skill.common.java.internal.FieldIterator;
+import de.ust.skill.common.java.internal.SkillObject;
 import de.ust.skill.common.java.internal.StoragePool;
 import de.ust.skill.common.java.internal.StringPool;
 import de.ust.skill.common.java.internal.fieldTypes.Annotation;
@@ -71,12 +74,6 @@ public final class SkillState extends de.ust.skill.common.java.internal.SkillSta
             Mode mode) {
         super(strings, in.path(), mode, types, poolByName, stringType, annotationType);
 
-//        try {
-//            StoragePool<?, ?> p;
-//        } catch (ClassCastException e) {
-//            throw new ParseException(in, -1, e,
-//                    "A super type does not match the specification; see cause for details.");
-//        }
         for (StoragePool<?, ?> t : types)
             poolByName.put(t.name(), t);
 
@@ -85,5 +82,27 @@ public final class SkillState extends de.ust.skill.common.java.internal.SkillSta
 
 	public ArrayList<StoragePool<?, ?>> getTypes() {
 		return this.types;
+	}
+	
+	public void prettyPrint() {
+		StringBuilder sb = new StringBuilder();
+		for(StoragePool<?, ?> pool : types) {
+			sb.append(pool.toString()).append("(").append(pool.size()).append(")");
+			if(pool.superPool != null) sb.append(":").append(pool.superPool);
+			sb.append(" {\n");
+			
+			FieldIterator fit = pool.allFields();
+			while(fit.hasNext()) {
+				FieldDeclaration<?, ?> f = fit.next();
+				sb.append("\t").append(f.type().toString()).append(" ").append(f.name());
+				for(SkillObject o : pool) {
+					sb.append(" ").append(f.get(o));
+				}
+				sb.append("\n");
+			}		
+			
+			sb.append("}\n\n");
+		}
+		System.out.println(sb.toString());
 	}
 }
