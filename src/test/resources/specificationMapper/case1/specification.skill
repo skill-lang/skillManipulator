@@ -1,0 +1,9 @@
+#! test
+
+@abstract
+S {
+	i8 x;
+}
+
+T:S {
+}

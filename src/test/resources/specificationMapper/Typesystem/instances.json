@@ -1,0 +1,53 @@
+{
+	"obj" : {
+	    "one" : {
+	        "A" : {
+	            "a" : "one"
+	        }
+	    },
+	    "two" : {
+	    	"A" : {
+	    		"a" : "two"
+	    	}
+	    },
+	    "three" : {
+	    	"B" : {
+	    		"a" : "three",
+	    		"b" : "three"
+	    	}
+	    },
+	    "four" : {
+	    	"B" : {
+	    		"a" : "four",
+	    		"b" : "four"
+	    	}
+	    },
+	    "five" : {
+	    	"C" : {
+	    		"a" : "five",
+	    		"c" : "five"
+	    	}
+	    },
+	    "six" : {
+	    	"C" : {
+	    		"a" : "six",
+	    		"c" : "six"
+	    	}
+	    },
+	    "seven" : {
+	    	"D" : {
+	    		"a" : "seven",
+	    		"b" : "seven",
+	    		"d" : "seven"
+	    	}
+	    },
+	    "eight" : {
+	    	"D" : {
+	    		"a" : "eight",
+	    		"b" : "eight",
+	    		"d" : "eight"
+	    	}
+	    }
+	}
+}
+
