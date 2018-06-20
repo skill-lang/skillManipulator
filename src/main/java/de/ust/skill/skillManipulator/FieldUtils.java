@@ -3,10 +3,13 @@ package de.ust.skill.skillManipulator;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.ust.skill.common.java.internal.FieldType;
 import de.ust.skill.common.java.internal.FieldDeclaration;
 import de.ust.skill.common.java.internal.FieldIterator;
 import de.ust.skill.common.java.internal.SkillObject;
 import de.ust.skill.common.java.internal.StoragePool;
+import de.ust.skill.common.java.internal.fieldTypes.MapType;
+import de.ust.skill.common.java.internal.fieldTypes.SingleArgumentType;
 
 /**
  * Class with methods to remove fields and reorder them.
@@ -96,7 +99,7 @@ public class FieldUtils {
 		for(StoragePool<?, ?> t : state.getTypes()) {
 			fieldToDelete.clear();
 			for(FieldDeclaration<?, ?> f : t.dataFields) {
-				if(f.type().typeID == typeID) {
+				if(fieldContainsType(typeID, f.type())) {
 					fieldToDelete.add(f);
 				}
 			}
@@ -106,6 +109,17 @@ public class FieldUtils {
 			}
 		}
 
+	}
+
+	private static boolean fieldContainsType(int typeID, FieldType<?> type) {
+		int typeIdField = type.typeID;
+		if(15 <= typeIdField && typeIdField <= 19) // linear collections
+			return ((SingleArgumentType<?,?>)type).groundType.typeID == typeID;
+		if(typeIdField == 20) // map type
+			return fieldContainsType(typeID, ((MapType<?,?>)type).keyType) && fieldContainsType(typeID, ((MapType<?,?>)type).valueType);
+		
+		// ground types and user types
+		return typeIdField == typeID;
 	}
 	
 	@SuppressWarnings("unchecked")

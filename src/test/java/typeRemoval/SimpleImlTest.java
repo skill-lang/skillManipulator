@@ -12,7 +12,7 @@ import de.ust.skill.skillManipulator.TypeUtils;
 class SimpleImlTest extends CommonTest{
 
 	@Test
-	void testRemoveAattributable() throws Exception {
+	void testRemoveAttributable() throws Exception {
 		Path path = tmpFile("simple.iml.remove.attributable");
 
         SkillFile sf = SkillFile.open("src/test/resources/simpleIml/simple.iml.sf");
