@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -19,6 +20,7 @@ import de.ust.skill.common.java.internal.FieldIterator;
 import de.ust.skill.common.java.internal.SkillObject;
 import de.ust.skill.common.java.internal.StaticFieldIterator;
 import de.ust.skill.common.java.internal.StoragePool;
+import de.ust.skill.common.java.restrictions.FieldRestriction;
 import de.ust.skill.skillManipulator.SkillFile;
 import de.ust.skill.skillManipulator.SkillState;
 
@@ -79,7 +81,7 @@ public abstract class CommonTest {
 						Object dataExpected = fieldExp.get(expObj);
 						Object dataActual = fieldAct.get(actObj);
 						if(!objectsEqual(dataExpected, dataActual)) {
-							fail("SkillObjects " + expObj + " and " + actObj + " differ in field " + fieldExp.name() + " (" + dataExpected + "; " + dataActual + ")");
+							fail("SkillObjects " + expObj + " and " + actObj + " differ in field " + fieldExp + " (" + dataExpected + "; " + dataActual + ")");
 						}
 					}
 				}
@@ -88,12 +90,14 @@ public abstract class CommonTest {
 	}
 
 	private static boolean objectsEqual(Object dataExpected, Object dataActual) {
-		if(null == dataExpected && null == dataActual) {
-			return true;
-		}
+		if(null == dataExpected && null == dataActual) return true;
+
 		if(null == dataExpected && dataActual instanceof SkillObject && ((SkillObject)dataActual).isDeleted()) {
 			return true;
 		}
+		
+		if(null == dataExpected ^ null == dataActual) return false;
+		
 		if(dataExpected instanceof Comparable<?>) {
 			return dataExpected.equals(dataActual);
 		} else if(dataExpected instanceof SkillObject) {
@@ -149,9 +153,24 @@ public abstract class CommonTest {
 			FieldDeclaration<?, ?> expField = expFieldsIt.next();
 			FieldDeclaration<?, ?> actField = actFieldsIt.next();
 			Assertions.assertEquals(expField, actField);
-			Assertions.assertIterableEquals(expField.restrictions, actField.restrictions);
+			compareFieldRestrictions(expField, actField);
 		}
-		Assertions.assertFalse(actFieldsIt.hasNext());
+		if(actFieldsIt.hasNext()) {
+			System.out.println(actFieldsIt.next());
+		}
+		Assertions.assertFalse(actFieldsIt.hasNext(), "Type has too much fields");
+	}
+
+	private static void compareFieldRestrictions(FieldDeclaration<?, ?> expField, FieldDeclaration<?, ?> actField) {
+		boolean found;
+		for(FieldRestriction<?> expRest : expField.restrictions) {
+			found = false;
+			for(FieldRestriction<?> actRest : actField.restrictions) {
+				if(expRest.equals(actRest)) found = true;
+			}
+			Assertions.assertTrue(found, "Restriction " + expRest + " missing for field " + expField);
+		}
+		Assertions.assertEquals(expField.restrictions.size(), actField.restrictions.size());
 	}
 
 	private static void compareStringPools(SkillState stateExpected, SkillState stateActual) {

@@ -8,6 +8,7 @@ import de.ust.skill.common.java.internal.BasePool;
 import de.ust.skill.common.java.internal.FileParser;
 import de.ust.skill.common.java.internal.SkillObject;
 import de.ust.skill.common.java.internal.StoragePool;
+import de.ust.skill.common.java.restrictions.DefaultValue;
 import de.ust.skill.common.java.restrictions.TypeRestriction;
 
 public final class Parser extends FileParser{
@@ -40,8 +41,12 @@ public final class Parser extends FileParser{
 			String name,
 			StoragePool<? super T, B> superPool,
 			HashSet<TypeRestriction> restrictions) {
-		
-		return newPool(name, superPool, types);	
+		StoragePool<T,B> pool = newPool(name, superPool, types);
+		for(TypeRestriction r : restrictions) {
+			pool.addRestriction(r);
+			if(r instanceof DefaultValue) pool.defaultValue = (DefaultValue<?>)r;
+		}
+		return pool;
 	}
 
 }

@@ -12,7 +12,8 @@ import de.ust.skill.common.java.internal.SkillObject;
 import de.ust.skill.common.java.internal.StoragePool;
 import de.ust.skill.common.java.internal.StringPool;
 import de.ust.skill.common.java.internal.fieldTypes.Annotation;
-import de.ust.skill.common.java.internal.fieldTypes.StringType;
+import de.ust.skill.common.java.restrictions.FieldRestriction;
+import de.ust.skill.common.java.restrictions.TypeRestriction;
 import de.ust.skill.common.jvm.streams.FileInputStream;
 
 /**
@@ -43,10 +44,9 @@ public final class SkillState extends de.ust.skill.common.java.internal.SkillSta
                 // and can not be done in place
                 StringPool strings = new StringPool(null);
                 ArrayList<StoragePool<?, ?>> types = new ArrayList<>(0);
-                StringType stringType = new StringType(strings);
                 Annotation annotation = new Annotation(types);
 
-                return new SkillState(new HashMap<>(), strings, stringType, annotation,
+                return new SkillState(new HashMap<>(), strings, annotation,
                         types, FileInputStream.open(path, false), actualMode.close);
 
             case Read:
@@ -67,12 +67,11 @@ public final class SkillState extends de.ust.skill.common.java.internal.SkillSta
     public SkillState(HashMap<String, 
     		StoragePool<?, ?>> poolByName, 
     		StringPool strings, 
-    		StringType stringType,
             Annotation annotationType, 
             ArrayList<StoragePool<?, ?>> types, 
             FileInputStream in, 
             Mode mode) {
-        super(strings, in.path(), mode, types, poolByName, stringType, annotationType);
+        super(strings, in.path(), mode, types, poolByName, annotationType);
 
         for (StoragePool<?, ?> t : types)
             poolByName.put(t.name(), t);
@@ -87,6 +86,7 @@ public final class SkillState extends de.ust.skill.common.java.internal.SkillSta
 	public void prettyPrint() {
 		StringBuilder sb = new StringBuilder();
 		for(StoragePool<?, ?> pool : types) {
+			for(TypeRestriction r : pool.restrictions) sb.append(r.toString()).append("\n");
 			sb.append(pool.toString()).append("(").append(pool.size()).append(")");
 			if(pool.superPool != null) sb.append(":").append(pool.superPool);
 			sb.append(" {\n");
@@ -94,6 +94,7 @@ public final class SkillState extends de.ust.skill.common.java.internal.SkillSta
 			FieldIterator fit = pool.allFields();
 			while(fit.hasNext()) {
 				FieldDeclaration<?, ?> f = fit.next();
+				for(FieldRestriction<?> r : f.restrictions) sb.append("\t").append(r.toString()).append("\n");
 				sb.append("\t").append(f.type().toString()).append(" ").append(f.name());
 				for(SkillObject o : pool) {
 					sb.append(" ").append(f.get(o));

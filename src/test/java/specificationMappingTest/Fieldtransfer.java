@@ -1,6 +1,5 @@
 package specificationMappingTest;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
 import java.io.File;
@@ -10,7 +9,6 @@ import java.nio.file.Paths;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DynamicTest;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import common.CommonTest;
