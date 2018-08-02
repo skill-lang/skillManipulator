@@ -2,7 +2,6 @@ package de.ust.skill.skillManipulator;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,7 +11,6 @@ import java.util.Set;
 import de.ust.skill.common.java.api.FieldType;
 import de.ust.skill.common.java.internal.FieldDeclaration;
 import de.ust.skill.common.java.internal.FieldIterator;
-import de.ust.skill.common.java.internal.InterfacePool;
 import de.ust.skill.common.java.internal.SkillObject;
 import de.ust.skill.common.java.internal.StoragePool;
 import de.ust.skill.common.java.internal.fieldTypes.MapType;
@@ -21,7 +19,8 @@ import de.ust.skill.common.java.internal.fieldTypes.SingleArgumentType;
 /**
  * state of a garbage collection run
  * 
- * @author olibroe
+ * basic idea by Timm Felden, see https://github.com/skill-lang/skillGC
+ * modified by Oliver Brösamle
  * 
  */
 public class GarbageCollector {
@@ -67,14 +66,6 @@ public class GarbageCollector {
 	
 	private final boolean printStatistics;
 	private final boolean printProgress;
-
-	// the mark status of all objects is saved in objReachable
-	// to calculate the index of objReachable the skillID is used
-	// the skillID is unique for every root type (super type is null), so we need a type offset for 
-	// all types that are not subtypes of the first root type
-	// calculation of index is: typeOffsets[t.typeID-32] + obj.getSkillID() - 1
-	private final int[] typeOffsets;
-	private final BitSet objReachable; 
 	
 	// if the flag is set all fields that represent collections are not erased if the types have no objects
 	// the keepTypes data structure stores then the types we need for the collections to exist
@@ -148,17 +139,10 @@ public class GarbageCollector {
 	private GarbageCollector(SkillFile sf, boolean keepCollectionFields, boolean printStatistics, boolean printProgress) {
 		this.state = (SkillState) sf;
 		
-		// types have to be in type order
-		this.typeOffsets = new int[this.state.getTypes().size()];
+		// count total objects
         for (StoragePool<?,?> t : this.state.getTypes()) {
-            if(t.superName() == null) {
-            	this.typeOffsets[t.typeID-32] = this.totalObjects;
-            	this.totalObjects += t.size();
-            } else {
-            	this.typeOffsets[t.typeID-32] = this.typeOffsets[t.typeID-32-1];
-            }
+            if(t.superName() == null) this.totalObjects += t.size();
         }	
-        this.objReachable = new BitSet(totalObjects);
           
         this.workingQueue = new ArrayDeque<>(10000);
         
@@ -183,8 +167,8 @@ public class GarbageCollector {
 			// get pool
 			StoragePool<?, ?> type = state.pool(obj.skillName());
 
-			//mark node
-			objReachable.set(typeOffsets[type.typeID-32] + obj.getSkillID() - 1);
+			// mark node
+			obj.marked = true;
 
 			// visit all fields of that node
 			FieldIterator fit = type.allFields();
@@ -237,10 +221,10 @@ public class GarbageCollector {
 		default:
 			// ref
 			SkillObject ref = (SkillObject)o;
-			if(ref == null || ref.isDeleted()) {
-				return;
-			}
-			if (!objReachable.get(typeOffsets[t.typeID()-32] + ref.getSkillID() - 1)) {
+			if(ref == null) return;
+			if(ref.isDeleted()) return;
+				
+			if(!ref.marked) {
 				workingQueue.push(ref);
 			}	
 		}
@@ -252,16 +236,18 @@ public class GarbageCollector {
 	 * sufficient to loop over their objects (superPool == null)
 	 */
 	private void removeDeadObjects() {
+		int reachable = totalObjects;
 		for(StoragePool<?,?> t : state.getTypes()) {
 			if(t.superPool == null)
 				for(SkillObject o : t) 
-					if(!o.isDeleted() && !objReachable.get(typeOffsets[t.typeID-32] + o.getSkillID() - 1)) {
+					if(!o.isDeleted() && !o.marked) {
 						if(printProgress) System.out.println("delete: " + o);
 						state.delete(o);
+						--reachable;
 					}
 		}
 		
-		if (printStatistics) System.out.println("  reachable: " + objReachable.cardinality());
+		if (printStatistics) System.out.println("  reachable: " + reachable);
 	}
 
 	/**
@@ -294,9 +280,17 @@ public class GarbageCollector {
 		}
 		
 		// keep type if there are objects of this type or we need the type for a collection
-		ArrayList<StoragePool<?, ?>> irrtypes = new ArrayList<>();
+		Set<StoragePool<?, ?>> irrtypes = new HashSet<>();
 		for (StoragePool<?, ?> pool : types) {
-			if(pool.size() == 0 && !keepTypes.contains(pool)) irrtypes.add(pool);
+			if(keepTypes.contains(pool)) {
+				StoragePool<?,?> superPool = pool.superPool;
+				while(superPool != null) {
+					irrtypes.remove(superPool);
+					superPool = superPool.superPool;
+				}
+			} else {
+				if(pool.size() == 0) irrtypes.add(pool);
+			}
 		}
 		
 		// if there are types we want to delete, we have to reorder the types
@@ -309,8 +303,8 @@ public class GarbageCollector {
 		StoragePool.unfix(types);
 		
 		// renew StringPool
+		// note: clear is enough, strings are automatically collected before write operation
 		state.Strings().clear();
-		state.collectStrings();
 	}
 	
 	/**
@@ -321,70 +315,58 @@ public class GarbageCollector {
 	 */
 	private boolean keepField(FieldType<?> t) {
 		// basic types
-		if(t.typeID() < 15) {
-			return true;
-		}
+		if(t.typeID() < 15) return true;
+		
 		// user types
-		if(t.typeID() >= 32) {
-			if(t instanceof StoragePool<?, ?>) {
-				return ((StoragePool<?,?>) t).size() > 0;
-			}
-			if(t instanceof InterfacePool<?, ?>) {
-				return ((StoragePool<?,?>) t).superPool.size() > 0;
-			}
-			return false;
-		}
-		// linear collections
-		if(15 <= t.typeID() && t.typeID() <= 19) {
+		if(t.typeID() >= 32) return ((StoragePool<?,?>) t).size() > 0;
+		
+		// linear collections (15 <= id <= 19)
+		// note: less than 15 can never reach this point
+		if(t.typeID() <= 19) {
 			if(keepCollectionFields && (((SingleArgumentType<?, ?>)t).groundType).typeID >= 32) {
 				keepTypes.add((StoragePool<?, ?>)((SingleArgumentType<?, ?>)t).groundType);
 				return true;
 			}
 			return keepField(((SingleArgumentType<?, ?>)t).groundType);
 		}
-		// map
-		if(t.typeID() == 20) {
-			if(keepCollectionFields) {
-				if(((MapType<?, ?>)t).keyType.typeID >= 32) 
-					keepTypes.add((StoragePool<?, ?>)((MapType<?, ?>)t).keyType);
-				else
-					keepField(((MapType<?, ?>)t).keyType);
-				
-				if(((MapType<?, ?>)t).valueType.typeID >= 32) 
-					keepTypes.add((StoragePool<?, ?>)((MapType<?, ?>)t).valueType);
-				else
-					keepField(((MapType<?, ?>)t).valueType);
-				
-				return true;
-			}
-			return (keepField(((MapType<?, ?>)t).keyType) && keepField(((MapType<?, ?>)t).valueType));
-		}
 		
-		// should not be reached
-		return false;
+		// map
+		// note: this point is only reachable with typeId = 20
+		if(keepCollectionFields) {
+			if(((MapType<?, ?>)t).keyType.typeID >= 32) 
+				keepTypes.add((StoragePool<?, ?>)((MapType<?, ?>)t).keyType);
+
+			if(((MapType<?, ?>)t).valueType.typeID >= 32) 
+				keepTypes.add((StoragePool<?, ?>)((MapType<?, ?>)t).valueType);
+			else // else case important for nested maps, return value can be ignored
+				keepField(((MapType<?, ?>)t).valueType);
+
+			return true;
+		}
+		return keepField(((MapType<?, ?>)t).keyType) && keepField(((MapType<?, ?>)t).valueType);
 	}
 
 	/**
 	 * Returns true if we can ignore the given field type.
 	 * This is the case for all non-user types, because we only want to remove dead SkillObjects.
+	 * Note: The order of the if-conditions is important here.
 	 *
 	 * @param t - type of field
 	 * @return true if type can be ignored, otherwise false
 	 */
 	private boolean ignoreType(FieldType<?> t) {
 		int id = t.typeID();
-		// simple data types
-		if (id <= 14) {
-			return true;
+		
+		// basic types
+		if (id <= 14) return true;
+		
 		// linear collections
-		} else if (15 <= id && id <= 19) {
-			return ignoreType(((SingleArgumentType<?, ?>)t).groundType);
+		if (id <= 19) return ignoreType(((SingleArgumentType<?, ?>)t).groundType);
+		
 		// maps
-		} else if (20 == id) {
-			return ignoreType(((MapType<?, ?>)t).keyType) && ignoreType(((MapType<?, ?>)t).valueType);
+		if (20 == id) return ignoreType(((MapType<?, ?>)t).keyType) && ignoreType(((MapType<?, ?>)t).valueType);
+		
 		// user types
-		} else {
-			return false;
-		}
+		return false;
 	}
 }

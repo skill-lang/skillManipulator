@@ -28,7 +28,8 @@ class EmptyTypePoolTest extends CommonTest{
         sf.close();
         
         SkillFile sfExpected = SkillFile.open("src/test/resources/EmptyTypePool/Reference/result.sf");
-        compareSkillFiles(sfExpected, sf);
+        SkillFile sfActual = SkillFile.open(path);
+        compareSkillFiles(sfExpected, sfActual);
 	}
 	
 	@Test
@@ -46,7 +47,8 @@ class EmptyTypePoolTest extends CommonTest{
         sf.close();
         
         SkillFile sfExpected = SkillFile.open("src/test/resources/EmptyTypePool/Reference/result.sf");
-        compareSkillFiles(sfExpected, sf);
+        SkillFile sfActual = SkillFile.open(path);
+        compareSkillFiles(sfExpected, sfActual);
 	}
 	
 	@Test
@@ -64,7 +66,8 @@ class EmptyTypePoolTest extends CommonTest{
         sf.close();
         
         SkillFile sfExpected = SkillFile.open("src/test/resources/EmptyTypePool/Array/result.sf");
-        compareSkillFiles(sfExpected, sf);
+        SkillFile sfActual = SkillFile.open(path);
+        compareSkillFiles(sfExpected, sfActual);
 	}
 	
 	@Test
@@ -82,7 +85,8 @@ class EmptyTypePoolTest extends CommonTest{
         sf.close();
         
         SkillFile sfExpected = SkillFile.open("src/test/resources/EmptyTypePool/Map/result.sf");
-        compareSkillFiles(sfExpected, sf);
+        SkillFile sfActual = SkillFile.open(path);
+        compareSkillFiles(sfExpected, sfActual);
 	}
 	
 	@Test
@@ -100,7 +104,8 @@ class EmptyTypePoolTest extends CommonTest{
         sf.close();
         
         SkillFile sfExpected = SkillFile.open("src/test/resources/EmptyTypePool/Array/array.sf");
-        compareSkillFiles(sfExpected, sf);
+        SkillFile sfActual = SkillFile.open(path);
+        compareSkillFiles(sfExpected, sfActual);
 	}
 	
 	@Test
@@ -118,7 +123,8 @@ class EmptyTypePoolTest extends CommonTest{
         sf.close();
         
         SkillFile sfExpected = SkillFile.open("src/test/resources/EmptyTypePool/Map/map.sf");
-        compareSkillFiles(sfExpected, sf);
+        SkillFile sfActual = SkillFile.open(path);
+        compareSkillFiles(sfExpected, sfActual);
 	}
 	
 	@Test
@@ -136,7 +142,8 @@ class EmptyTypePoolTest extends CommonTest{
         sf.close();
         
         SkillFile sfExpected = SkillFile.open("src/test/resources/EmptyTypePool/Reference/result_variation.sf");
-        compareSkillFiles(sfExpected, sf);
+        SkillFile sfActual = SkillFile.open(path);
+        compareSkillFiles(sfExpected, sfActual);
 	}
 
 }

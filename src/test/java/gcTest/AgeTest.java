@@ -30,7 +30,8 @@ class AgeTest extends CommonTest{
         sf.close();
         
         SkillFile sfExpected = SkillFile.open("src/test/resources/age/age-example.sf");
-        compareSkillFiles(sfExpected, sf);
+        SkillFile sfActual = SkillFile.open(path);
+        compareSkillFiles(sfExpected, sfActual);
 	}
 	
 	@Test
@@ -48,7 +49,8 @@ class AgeTest extends CommonTest{
         sf.close();
 
         SkillFile sfExpected = SkillFile.open("src/test/resources/age/age-example-delete-second.sf");
-        compareSkillFiles(sfExpected, sf);
+        SkillFile sfActual = SkillFile.open(path);
+        compareSkillFiles(sfExpected, sfActual);
 	}
 	
 	@Test
@@ -66,7 +68,8 @@ class AgeTest extends CommonTest{
         sf.close();
 
         SkillFile sfExpected = SkillFile.open("src/test/resources/age/age-example-delete-first.sf");
-        compareSkillFiles(sfExpected, sf);
+        SkillFile sfActual = SkillFile.open(path);
+        compareSkillFiles(sfExpected, sfActual);
 	}
 	
 	@Test
@@ -81,7 +84,8 @@ class AgeTest extends CommonTest{
         sf.close();
 
         SkillFile sfExpected = SkillFile.open("src/test/resources/empty-file.sf");
-        compareSkillFiles(sfExpected, sf);
+        SkillFile sfActual = SkillFile.open(path);
+        compareSkillFiles(sfExpected, sfActual);
         
         // empty SkillFile expected, therefore binary equality possible
         // empty SkillFile is 2 Bytes zeros
@@ -96,7 +100,7 @@ class AgeTest extends CommonTest{
         sf.changePath(path);
         
         Set<CollectionRoot> roots = new HashSet<>();
-        roots.add(new CollectionRoot("age"));
+        roots.add(new CollectionRoot("age",0));
         
         GarbageCollector.run(sf, roots, false, true, true);
         GarbageCollector.run(sf, roots, false, true, true);
@@ -104,7 +108,8 @@ class AgeTest extends CommonTest{
         sf.close();
 
         SkillFile sfExpected = SkillFile.open("src/test/resources/age/age-example.sf");
-        compareSkillFiles(sfExpected, sf);
+        SkillFile sfActual = SkillFile.open(path);
+        compareSkillFiles(sfExpected, sfActual);
 	}
 
 }

@@ -1,0 +1,12 @@
+#! specialCases
+
+L {}
+T {
+  map<i32,i32> intMap;
+  map<L,v64> mixedMap;
+  map<L, L> lMap;
+  set<i8> byteSet;
+  list<i16> shortList;
+  i32[] intArray;
+  i64[5] fixedLongArray;
+}

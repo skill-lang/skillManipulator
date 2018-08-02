@@ -1,0 +1,27 @@
+{
+	"obj" : {
+	    "one" : {
+	        "T" : {
+	            "intMap" : {"8" : 15},
+	            "mixedMap" : {"null" : "1"},
+	            "lMap" : {"null" : "null"},
+	            "byteSet" : ["-1", "1"],
+	            "shortList" : ["1","2","3"],
+	            "intArray" : ["-1","-2","-3"],
+	            "fixedLongArray" : ["5","6","7","8","9"]
+	        }
+	    },
+	    "two" : {
+	        "T" : {
+	        	"intMap" : {"6" : "12","19" : "23"},
+	        	"mixedMap" : {"null" : "-1"},
+	            "lMap" : {"null" : "null"},
+	            "byteSet" : ["100", "-30"],
+	            "shortList" : ["100","102","105"],
+	            "intArray" : ["-3","6","8"],
+	            "fixedLongArray" : ["15","16","17","18","19"]
+	        }
+	    },
+	}
+}
+

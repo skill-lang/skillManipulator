@@ -2,10 +2,13 @@ package common;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterAll;
@@ -18,16 +21,17 @@ import de.ust.skill.skillManipulator.GarbageCollector.CollectionRoot;
 
 public abstract class CommonPerformanceTest extends CommonTest{
 	private final int executions;
-	private final String expectedFolder;
 	private static Set<TimeInformation> timeInfos = new HashSet<>();
 	
-	public CommonPerformanceTest(int executions, String expectedFolder) {
+	public CommonPerformanceTest(int executions) {
 		this.executions = executions;
-		this.expectedFolder = expectedFolder;
 	}
 	
 	class TimeInformation {
 		long[] time = new long[executions];
+		long[] gcTime = new long[executions];
+		long[] cpuTime = new long[executions];
+		
 		int totalObjects = -1;
 		String filename;
 		
@@ -44,39 +48,42 @@ public abstract class CommonPerformanceTest extends CommonTest{
 		
 		System.out.println("GC for " + filename);
 		
-		boolean firstTime = true;
-		for(int i = 0; i < executions; i++) {
-			System.out.print("  run " + (i+1) + " of " + executions + " started...");
+		for(int i = -1; i < executions; i++) {
+			
+			if(i != -1) System.out.print("  run " + (i+1) + " of " + executions + " started...");
 			
 			SkillFile sf = SkillFile.open(filepath);
 	        sf.changePath(tmpFile(filename));
 
-	        if(firstTime) ti.totalObjects = countObjects(sf);
+	        if(i == -1) ti.totalObjects = countObjects(sf);
 	        
 	        Set<CollectionRoot> roots = new HashSet<>();
 	        roots.add(new CollectionRoot("imlgraph"));
 
+	        long startCPU = ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime();
+
+	        long startGcTime = getGarbageCollectionTime();
+	        
 	        long start = System.currentTimeMillis();
-	        GarbageCollector.run(sf, roots, false, false, false);
+	        try {
+	        	GarbageCollector.run(sf, roots, false, false, false);
+	        } catch (OutOfMemoryError e) {
+	        	System.out.print("...Out of Memory...");
+	        }
 	        long end = System.currentTimeMillis();
 	        
-	        ti.time[i] = end - start;
+	        long endGcTime = getGarbageCollectionTime();
 
-	        if(firstTime && expectedFolder != null) {
-		        sf.close();
-	
-		        try {
-		        	SkillFile sfExpected = SkillFile.open(expectedFolder + filename);
-		        	compareSkillFiles(sfExpected, sf);       
-		        } catch (Exception e) {
-		        	System.out.println("Expected SkillFile could not be opened: " + expectedFolder + filename);
-		        }
-		        
+	        long endCPU = ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime();
+	        
+	        if(i != -1) {
+		        ti.time[i] = end - start;
+		        ti.gcTime[i] = endGcTime - startGcTime;
+		        ti.cpuTime[i] = Math.round((endCPU - startCPU) / 1E6);
+		        System.out.println("finished (" + ti.time[i] + " ms)");
 	        }
-	        
-	        firstTime = false;
-	        
-	        System.out.println("finished (" + ti.time[i] + " ms)");
+	         
+	        System.gc();
 		}
 	}
 
@@ -88,21 +95,30 @@ public abstract class CommonPerformanceTest extends CommonTest{
 		return objCount;
 	}
 	
+	private static long getGarbageCollectionTime() {
+	    long collectionTime = 0;
+	    for (GarbageCollectorMXBean garbageCollectorMXBean : ManagementFactory.getGarbageCollectorMXBeans()) {
+	        collectionTime += garbageCollectorMXBean.getCollectionTime();
+	    }
+	    return collectionTime;
+	}
+	
 	@AfterAll
 	static void performanceAnalysis() throws Exception {
 		String filename = new SimpleDateFormat("'output/performanceTest-'yyyy-MM-dd-HH-mm-ss'.csv'").format(new Date());
 		PrintWriter pw = new PrintWriter(new File(filename));
         StringBuilder sb = new StringBuilder();
-        sb.append("filename,object count,time(ms)\n");
+        sb.append("filename,object count,time(ms),gc time(ms),cpu time(ms)\n");
 	
 		for(TimeInformation ti : timeInfos) {
 			System.out.println(ti.filename);
 			System.out.println("  Object count: " + ti.totalObjects);
 			
 			double average = 0;
-			for(long t : ti.time) {
-				sb.append(ti.filename + "," + ti.totalObjects + "," + t + "\n");
-				average += t;
+			for (int i = 0; i < ti.time.length; i++) {
+				sb.append(ti.filename).append(",").append(ti.totalObjects).append(",").append(ti.time[i])
+					.append(",").append(ti.gcTime[i]).append(",").append(ti.cpuTime[i]).append("\n");
+				average += ti.time[i];
 			}
 			
 			average = average / ti.time.length;
