@@ -8,21 +8,26 @@ import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterAll;
 
 import de.ust.skill.common.java.api.Access;
 import de.ust.skill.common.java.internal.SkillObject;
-import de.ust.skill.skillManipulator.GarbageCollector;
 import de.ust.skill.skillManipulator.SkillFile;
-import de.ust.skill.skillManipulator.GarbageCollector.CollectionRoot;
 
+/**
+ * This class is common for performance tests.
+ * To use the class extend it and overwrite executeMethod with the method you want to measure.
+ * Then for every file call startExecution.
+ * 
+ * @author olibroe
+ *
+ */
 public abstract class CommonPerformanceTest extends CommonTest{
 	private final int executions;
 	private static Set<TimeInformation> timeInfos = new HashSet<>();
-	
+
 	public CommonPerformanceTest(int executions) {
 		this.executions = executions;
 	}
@@ -39,8 +44,10 @@ public abstract class CommonPerformanceTest extends CommonTest{
 			this.filename = filename;
 		}
 	}
+	
+	protected abstract void executeMethod(SkillFile sf);
 
-	protected void executeGC(Path filepath) throws Exception {
+	protected void startExecution(Path filepath) throws Exception {
 		String filename = filepath.getFileName().toString();
 		
 		TimeInformation ti = new TimeInformation(filename);
@@ -56,9 +63,6 @@ public abstract class CommonPerformanceTest extends CommonTest{
 	        sf.changePath(tmpFile(filename));
 
 	        if(i == -1) ti.totalObjects = countObjects(sf);
-	        
-	        Set<CollectionRoot> roots = new HashSet<>();
-	        roots.add(new CollectionRoot("imlgraph"));
 
 	        long startCPU = ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime();
 
@@ -66,7 +70,7 @@ public abstract class CommonPerformanceTest extends CommonTest{
 	        
 	        long start = System.currentTimeMillis();
 	        try {
-	        	GarbageCollector.run(sf, roots, false, false, false);
+	        	executeMethod(sf);
 	        } catch (OutOfMemoryError e) {
 	        	System.out.print("...Out of Memory...");
 	        }
@@ -104,7 +108,7 @@ public abstract class CommonPerformanceTest extends CommonTest{
 	}
 	
 	@AfterAll
-	static void performanceAnalysis() throws Exception {
+	private static void performanceAnalysis() throws Exception {
 		String filename = new SimpleDateFormat("'output/performanceTest-'yyyy-MM-dd-HH-mm-ss'.csv'").format(new Date());
 		PrintWriter pw = new PrintWriter(new File(filename));
         StringBuilder sb = new StringBuilder();
