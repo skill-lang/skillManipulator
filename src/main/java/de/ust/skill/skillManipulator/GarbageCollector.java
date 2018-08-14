@@ -275,7 +275,7 @@ public class GarbageCollector {
 
 			if (irrFields.size() > 0) {
 				type.dataFields.removeAll(irrFields);
-				FieldUtils.reorderFields(type);
+				FieldUtils.renewFieldIndices(type);
 			}
 		}
 		
@@ -296,7 +296,7 @@ public class GarbageCollector {
 		// if there are types we want to delete, we have to reorder the types
 		if (irrtypes.size() > 0) {
 			types.removeAll(irrtypes);
-			TypeUtils.reorderTypes(state);
+			TypeUtils.renewTypeIDs(state);
 		}		
 		
 		// unfix types
