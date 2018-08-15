@@ -38,6 +38,7 @@ class GcPerformanceTest extends CommonPerformanceTest{
 	public GcPerformanceTest() {
 		super(EXECUTIONS);
 		roots.add(new CollectionRoot("imlgraph"));
+		roots.add(new CollectionRoot("metainformation"));
 	}
 
 	@Disabled

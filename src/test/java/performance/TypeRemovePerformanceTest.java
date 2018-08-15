@@ -16,7 +16,7 @@ import de.ust.skill.skillManipulator.TypeUtils;
 
 class TypeRemovePerformanceTest extends CommonPerformanceTest{
 	private static final int EXECUTIONS = 10;
-	private static final String TESTFOLDER = "/media/olibroe/DATA/Ubuntu_Data/imlfiles/";
+	private static final String TESTFOLDER = "/media/olibroe/DATA/Ubuntu_Data/imlfiles2/";
 	
 	private String typename;
 	
@@ -49,7 +49,6 @@ class TypeRemovePerformanceTest extends CommonPerformanceTest{
 	@Override
 	protected void executeMethod(SkillFile sf) {
 		TypeUtils.deleteType(sf, typename);
-		
 	}
 
 }

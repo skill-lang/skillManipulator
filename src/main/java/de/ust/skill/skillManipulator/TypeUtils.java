@@ -4,12 +4,29 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.ust.skill.common.java.internal.SkillObject;
+import de.ust.skill.common.java.internal.StaticDataIterator;
 import de.ust.skill.common.java.internal.StoragePool;
+import de.ust.skill.common.java.internal.TypeHierarchyIterator;
 
-public class TypeUtils {
+/**
+ * Util-class provides static methods for types
+ * 
+ * @author olibroe
+ *
+ */
+public final class TypeUtils {
+	/**
+	 * No instantiation of utils class
+	 */
+	private TypeUtils() {};
 	
-	public static void reorderTypes(SkillState state) {
+	/**
+	 * After removing or adding a type to the state a recreation of type IDs is necessary.
+	 * Type IDs start at 32.
+	 * 
+	 * @param state - types of this state need a new ID
+	 */
+	public static void renewTypeIDs(SkillState state) {
 		ArrayList<StoragePool<?, ?>> types = state.getTypes();
 		int nextID = 32;
 		for (StoragePool<?, ?>  s : types) {
@@ -21,23 +38,30 @@ public class TypeUtils {
 		StoragePool.establishNextPools(types);
 	}
 
-	public static void deleteType(SkillState state, StoragePool<?,?> type) {
+	/**
+	 * Deletes a type and all of its subtypes from the state.
+	 * The steps are:
+	 * 1. delete all objects of the type
+	 * 2. identify all subtypes
+	 * 3. delete all fields that have references on the type and its subtypes
+	 * 4. remove type and its subtypes from state
+	 * 5. renew typeIDs and next pointers
+	 * 
+	 * @param state
+	 * @param type
+	 */
+	public static boolean deleteType(SkillState state, StoragePool<?,?> type) {
 		ArrayList<StoragePool<?, ?>> types = state.getTypes();
 
+		// add all subtypes to remove them too and delete their objects
 		Set<StoragePool<?, ?>> deleteTypes = new HashSet<>();
-		deleteTypes.add(type);
-
-		// delete all objetcs of type
-		for(SkillObject o : type) {
-			state.delete(o);
-		}
-
-		// add all subtypes to remove them too
-		// note: type order is important here
-		for(StoragePool<?, ?> t : types) {
-			if(deleteTypes.contains(t.superPool)) {
-				deleteTypes.add(t);
-			}
+		TypeHierarchyIterator<?, ?> it = new TypeHierarchyIterator<>(type);
+		StaticDataIterator<?> sit;
+		while(it.hasNext()) {
+			StoragePool<?, ?> pool = it.next();
+			deleteTypes.add(pool);
+			sit = pool.staticInstances();
+			while(sit.hasNext()) pool.delete(sit.next());
 		}
 
 		// delete all fields of the types we want to delete
@@ -45,12 +69,21 @@ public class TypeUtils {
 			FieldUtils.removeAllFieldsOfType(state, t.typeID);
 
 		// removes types we want to remove
-		types.removeAll(deleteTypes);
+		boolean successfullRemove = types.removeAll(deleteTypes);
 
-		reorderTypes(state);
+		renewTypeIDs(state);
+		
+		return successfullRemove;
 	}
 
-
+	/**
+	 * Wrapper function for convenience.
+	 * Type can be given as a string here.
+	 * 
+	 * @param sf - SkillFile from which the type needs to be removed
+	 * @param type - string of type name
+	 * @return
+	 */
 	public static boolean deleteType(SkillFile sf, String type) {
 		SkillState state = (SkillState)sf;
 		StoragePool<?, ?> pool = state.pool(type);
@@ -58,8 +91,7 @@ public class TypeUtils {
 		if(pool == null) {
 			return false;
 		} else {
-			deleteType(state, pool);
-			return true;
+			return deleteType(state, pool);
 		}
 	}
 
