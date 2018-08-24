@@ -19,8 +19,6 @@ import de.ust.skill.common.java.internal.FieldType;
 import de.ust.skill.common.java.internal.SkillObject;
 import de.ust.skill.common.java.internal.StaticFieldIterator;
 import de.ust.skill.common.java.internal.StoragePool;
-import de.ust.skill.common.java.internal.TypeHierarchyIterator;
-import de.ust.skill.common.java.internal.fieldTypes.ConstantLengthArray;
 import de.ust.skill.common.java.internal.fieldTypes.MapType;
 import de.ust.skill.common.java.internal.fieldTypes.SingleArgumentType;
 import de.ust.skill.common.java.internal.parts.Block;
@@ -29,9 +27,9 @@ import de.ust.skill.ir.TypeContext;
 public class SpecificationMapper {
 	
 	// maps pools from old state to new state
-	private Map<StoragePool<?,?>, StoragePool<?,?>> poolMapping = new HashMap<>();
+	protected Map<StoragePool<?,?>, StoragePool<?,?>> poolMapping = new HashMap<>();
 	
-	private SkillState newState;
+	protected SkillState newState;
 	private SkillState oldState;
 	
 	// lbpo maps of the old and new types
@@ -43,12 +41,11 @@ public class SpecificationMapper {
 	// the relative position of the projected type in the type it is projected to 
 	private int[] projectionOffsetMap;
 	
-	private ErrorLog log = new ErrorLog();
-	
 	private SpecificationMapper() {}
 	
 	public static SkillFile map(TypeContext tc, SkillFile sf, Path targetPath) {
 		SpecificationMapper mapper = new SpecificationMapper();
+		MappingLog.clearLog();
 		
 		mapper.oldState = (SkillState)sf;
 		
@@ -71,8 +68,9 @@ public class SpecificationMapper {
 		// TODO remove print
 		mapper.newState.prettyPrint();
 		
-		mapper.log.printMessages();
+		System.out.println(MappingLog.printLog());
 		
+		// TODO remove close
 		mapper.newState.close();
 		
 		return mapper.newState;
@@ -92,15 +90,16 @@ public class SpecificationMapper {
 			
 			// if new pool is null, we want to project the type to one of its superpools
 			// because of the type order we can take the mapping of the direct supertype
-			// if we can not project the type, its mapping will be null
+			// if we can not project the type, the mapping of the superpool will be null
 			if(newPool == null) {
 				newPool = poolMapping.get(oldPool.superPool);
 				if(newPool != null) {
 					// if we can project the old pool, we need the offset map later to refer to the types instances
 					projectionOffsetMap[oldPool.typeID-32] = newPool.staticDataInstances;
 					newPool.staticDataInstances += oldPool.staticDataInstances;
+					MappingLog.genProjectionMessage(oldPool, newPool);
 				} else {
-					log.generateTypeNotFoundError(oldPool);
+					MappingLog.genTypeNotFoundError(oldPool);
 				}
 			} else {		
 				newPool.staticDataInstances += oldPool.staticDataInstances;
@@ -154,6 +153,7 @@ public class SpecificationMapper {
 		
 		StoragePool.unfix(newState.getTypes());
 		
+		FieldCompatibilityChecker checker = new FieldCompatibilityChecker(this);
 		FieldIterator oldFieldIt;
 		FieldDeclaration<?,?> oldField;
 		FieldDeclaration<?,?> newField;
@@ -168,14 +168,20 @@ public class SpecificationMapper {
 				while(oldFieldIt.hasNext()) {
 					oldField = oldFieldIt.next();
 					
-					// search for right field in fields of new type
-					newField = searchField(oldField.name(), newPool);
-					
-					if(newField != null) {
-						if(fieldsAreCompatible(oldField, newField)) transferFieldData(oldField, newField, oldPool, newPool);
-						else log.generateFieldIncompatibleError(oldPool, newPool, oldField, newField);
-					} else {
-						log.generateFieldNotFoundError(oldPool, newPool, oldField);
+					// skip constant fields
+					if(oldField.type().typeID > 4) {
+						
+						// search for right field in fields of new type
+						newField = searchField(oldField.name(), newPool);
+						
+						if(newField != null) {
+							if(checker.fieldsCompatible(oldField, newField)) transferFieldData(oldField, newField, oldPool, newPool);
+							else {
+								MappingLog.genFieldIncompatibleError(oldField, newField);
+							}
+						} else {
+							if(newPool.size() > 0) MappingLog.genFieldNotFoundError(oldField);
+						}
 					}
 				}
 			}
@@ -194,102 +200,6 @@ public class SpecificationMapper {
 		return null;
 	}
 
-	private boolean fieldsAreCompatible(FieldDeclaration<?,?> oldField, FieldDeclaration<?,?> newField) {
-		TypeRelation rel = staticTypeRelation(oldField.type(), newField.type());
-
-		if(rel == TypeRelation.EQUAL || rel == TypeRelation.UPCAST) return true;
-		
-		return false;
-	}
-	
-	enum TypeRelation { EQUAL, UPCAST, DOWNCAST, NOT_RELATED };
-	
-	private TypeRelation staticTypeRelation(FieldType<?> oldType, FieldType<?> newType) {
-		int oldTypeId = oldType.typeID;
-		int newTypeId = newType.typeID;
-		
-		switch(oldTypeId) {
-		case 0:
-		case 1:
-		case 2:
-		case 3:
-		case 4:
-			if(newTypeId == oldTypeId) return TypeRelation.EQUAL;
-			return TypeRelation.NOT_RELATED;
-		case 5:
-			// annotation
-			if(newTypeId == 5) return TypeRelation.EQUAL;
-			if(newTypeId >= 32) return TypeRelation.DOWNCAST;
-			return TypeRelation.NOT_RELATED;
-		case 6:
-			// bool
-			if(newTypeId == 6) return TypeRelation.EQUAL;
-			return TypeRelation.NOT_RELATED;
-		case 7:
-		case 8:
-		case 9:
-		case 10:
-		case 11:
-			// Integer types
-			if(newTypeId == oldTypeId) return TypeRelation.EQUAL;
-			if(newTypeId < 7 || 13 < newTypeId) return TypeRelation.NOT_RELATED;
-			if(newTypeId > oldTypeId) {
-				if(newTypeId >= 12) {
-					log.generateIntFloatWarning(oldType, newType, "Precision could be lost.");
-				}
-				return TypeRelation.UPCAST;
-			} else {
-				return TypeRelation.DOWNCAST;
-			}
-		case 12:
-		case 13:
-			// float types
-			if(newTypeId == oldTypeId) return TypeRelation.EQUAL;
-			// note: only upcast or downcast case can reach this, equal case returns one line above
-			if(newTypeId == 13) return TypeRelation.UPCAST;
-			if(newTypeId == 12) return TypeRelation.DOWNCAST;
-			return TypeRelation.NOT_RELATED;
-		case 14:
-			// string type
-			if(newTypeId == 14) return TypeRelation.EQUAL;
-			return TypeRelation.NOT_RELATED;
-		case 15:
-		case 17:
-		case 18:
-		case 19:
-			if(newTypeId < 15 || 19 < newTypeId) return TypeRelation.NOT_RELATED;
-			return staticTypeRelation(((SingleArgumentType<?, ?>)oldType).groundType, ((SingleArgumentType<?, ?>)newType).groundType);
-		case 20:
-			if(newTypeId != 20) return TypeRelation.NOT_RELATED;
-			TypeRelation keyRel = staticTypeRelation(((MapType<?, ?>)oldType).keyType, ((MapType<?, ?>)newType).keyType);
-			TypeRelation valueRel = staticTypeRelation(((MapType<?, ?>)oldType).valueType, ((MapType<?, ?>)newType).valueType);
-			if(keyRel == TypeRelation.NOT_RELATED || valueRel == TypeRelation.NOT_RELATED) return TypeRelation.NOT_RELATED;
-			if(keyRel == TypeRelation.DOWNCAST || valueRel == TypeRelation.DOWNCAST) return TypeRelation.DOWNCAST;
-			if(keyRel == TypeRelation.UPCAST || valueRel == TypeRelation.UPCAST) return TypeRelation.UPCAST;
-			return TypeRelation.EQUAL;
-		default:
-			StoragePool<?,?> mappedPool = poolMapping.get((StoragePool<?, ?>) oldType);
-			StoragePool<?,?> newPool = (StoragePool<?, ?>) newType;
-
-			if(mappedPool != null) {
-				if(mappedPool.equals(newPool)) return TypeRelation.EQUAL;
-				// check for upcast
-				while(mappedPool.superPool != null) {
-					mappedPool = mappedPool.superPool;
-					if(mappedPool.equals(newPool)) return TypeRelation.UPCAST;
-				}
-			}
-			// check for downcast
-			TypeHierarchyIterator<?, ?> hierarchyIt = new TypeHierarchyIterator<>(mappedPool);
-			StoragePool<?,?> pool;
-			while(hierarchyIt.hasNext()) {
-				pool = hierarchyIt.next();
-				if(pool.equals(newPool)) return TypeRelation.DOWNCAST;
-			}
-			return TypeRelation.NOT_RELATED;
-		}
-	}
-	
 	private Object castNumber(int id, Number n) {
 		switch(id) {
 		case 7: return n.byteValue();
@@ -310,7 +220,7 @@ public class SpecificationMapper {
 	private <T> void transferFieldData(FieldDeclaration<?, ?> oldField, FieldDeclaration<T, ?> newField,
 			StoragePool<?,?> oldPool, StoragePool<?,?> newPool) {
 		int id = newField.type().typeID;
-		if(id >= 32) {
+		if(id >= 32 || id == 5) {
 			for(SkillObject oldObj : oldPool) {
 				SkillObject newObj = calculateNewSkillObject(oldObj);
 				
@@ -360,23 +270,6 @@ public class SpecificationMapper {
 					else newValues.add(o);
 				}
 				
-				// constant length array size checking
-				if(id == 15) {
-					int difference = newValues.size() - ((ConstantLengthArray<?>)newField.type()).length;
-					if(difference < 0) {
-						// less elements than needed
-						log.generateFieldMappingWarning(oldPool, newPool, oldField, newField,
-								newObj + ": Constant length array has less values than it needs. Filling in default values.");
-						for(int i = 0; i > difference; i--) newValues.add(FieldUtils.getDefaultValue(((ConstantLengthArray<?>)newField.type()).groundType));
-					}
-					if(difference > 0) {
-						// too much elements
-						log.generateFieldMappingWarning(oldPool, newPool, oldField, newField,
-								newObj + ": Constant length array gets too much elements. Removing elements at the end to match length.");
-						for(int i = 0; i < difference; i++) ((ArrayList<?>)newValues).remove(newValues.size() - 1);
-					}
-				}
-				
 				newField.set(newObj, (T)newValues);
 			}
 		} else if(20 == id) {
@@ -410,10 +303,11 @@ public class SpecificationMapper {
 		return newMap;
 	}
 	
-	private SkillObject calculateNewSkillObject(SkillObject oldObject) {
+	protected SkillObject calculateNewSkillObject(SkillObject oldObject) {
 		if(oldObject == null) return null;
 		StoragePool<?,?> oldPool = oldState.pool(oldObject.skillName());
 		StoragePool<?,?> newPool = poolMapping.get(oldPool);
+		if(newPool == null) return null;
 		
 		// skill id - lbpo(oldPool) => relative id in oldPool
 		// relative id in oldPool + lbpo(newPool) => relative id in new pool
