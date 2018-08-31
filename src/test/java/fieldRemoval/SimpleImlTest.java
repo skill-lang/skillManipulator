@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import common.CommonTest;
-import de.ust.skill.skillManipulator.FieldUtils;
-import de.ust.skill.skillManipulator.SkillFile;
+import de.ust.skill.skillManipulator.internal.SkillFile;
+import de.ust.skill.skillManipulator.utils.FieldUtils;
 
 class SimpleImlTest extends CommonTest{
 

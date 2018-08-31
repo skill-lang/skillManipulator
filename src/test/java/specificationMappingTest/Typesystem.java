@@ -14,14 +14,14 @@ import org.junit.jupiter.api.TestFactory;
 import common.CommonTest;
 import de.ust.skill.ir.TypeContext;
 import de.ust.skill.parser.Parser;
-import de.ust.skill.skillManipulator.SkillFile;
-import de.ust.skill.skillManipulator.SpecificationMapper;
+import de.ust.skill.skillManipulator.internal.SkillFile;
+import specificationMapping.SpecificationMapper;
 
 class Typesystem extends CommonTest{
 
 	@TestFactory
     Stream<DynamicTest> dynamicTestsFromStream() throws Exception {
-		return Files.walk(Paths.get("src/test/resources/specificationMapper/Typesystem/"), 1)
+		return Files.walk(Paths.get("src/test/resources/specificationMapper/typesystem/"), 1)
 				.filter(path -> path.getFileName().toString().endsWith(".skill"))
 				.map(path -> dynamicTest("test_" + path.getFileName().toString(), () -> {
 					executeMapping(path);
@@ -34,12 +34,13 @@ class Typesystem extends CommonTest{
 
 		Path path = tmpFile(src);
 
-        SkillFile sf = SkillFile.open("src/test/resources/specificationMapper/Typesystem/specification.sf");
+        SkillFile sf = SkillFile.open("src/test/resources/specificationMapper/typesystem/specification.sf");
 
         TypeContext tc = Parser.process(new File(srcPath.toString()), false, false, false, false);
 		tc = tc.removeSpecialDeclarations();
         
-        SpecificationMapper.map(tc, sf, path);
+		SkillFile newSf = SpecificationMapper.map(tc, sf, path);
+        newSf.close();
         
         SkillFile sfExpected = SkillFile.open(expected);
         compareSkillFiles(sfExpected, SkillFile.open(path.toString()));

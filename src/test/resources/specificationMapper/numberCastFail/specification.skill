@@ -1,0 +1,14 @@
+#! downcastFailNumbertypes
+
+A {
+	i64 maxLong;
+	i64 minLong;
+	
+	f64 bigPosDouble;
+	f64 bigNegDouble;
+	
+	f64 nan;
+	
+	bool b;
+	string s;
+}

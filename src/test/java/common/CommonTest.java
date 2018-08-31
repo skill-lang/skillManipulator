@@ -7,7 +7,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -21,13 +20,14 @@ import de.ust.skill.common.java.internal.SkillObject;
 import de.ust.skill.common.java.internal.StaticFieldIterator;
 import de.ust.skill.common.java.internal.StoragePool;
 import de.ust.skill.common.java.restrictions.FieldRestriction;
-import de.ust.skill.skillManipulator.SkillFile;
-import de.ust.skill.skillManipulator.SkillState;
+import de.ust.skill.skillManipulator.internal.SkillFile;
+import de.ust.skill.skillManipulator.internal.SkillState;
 
 public abstract class CommonTest {
 
 	protected static Path tmpFile(String string) throws Exception {
         File r = File.createTempFile(string, ".sf");
+        // TODO
 //        r.deleteOnExit();
         return r.toPath();
     }

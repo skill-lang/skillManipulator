@@ -1,0 +1,16 @@
+{
+	"obj" : {
+	    "instance" : {
+	    	"A" : {
+		    	"maxLong" : 9223372036854775807,
+		    	"minLong" : -9223372036854775808,
+		    	"bigPosDouble" : "1.0/0.0",
+		    	"bigNegDouble" : "-1.0/0.0",
+		    	"nan" : "0.0d/0.0",
+		    	"s" : "Hello World",
+		    	"b" : true
+		    }
+	    }
+	}
+}
+

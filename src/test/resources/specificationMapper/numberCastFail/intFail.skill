@@ -1,0 +1,14 @@
+#! downcastFailNumbertypes
+
+A {
+	i32 maxLong;
+	i32 minLong;
+	
+	i32 bigPosDouble;
+	i32 bigNegDouble;
+	
+	i32 nan;
+	
+	i32 b;
+	i32 s;
+}

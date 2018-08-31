@@ -1,0 +1,36 @@
+#! downcastTests
+
+A {}
+B:A {}
+C:A {}
+D:B {}
+
+E {
+	set<i16> a;
+	list<i8> b;
+	map<A,B,C> c;
+	i16[25] d;
+	
+	f64 e;
+	
+	i16[3] f;
+	i32[] g;
+	list<i64> h;
+	set<f64> i;
+	set<i16> j;
+}
+
+F {
+	annotation anno;
+	
+	A a;
+	B b;
+	C c;
+	D d;
+	
+	A[5] e;
+	A[] f;
+	list<A> g;
+	set<A> h;
+	i8[14] i;
+}

@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import common.CommonTest;
-import de.ust.skill.skillManipulator.FieldUtils;
-import de.ust.skill.skillManipulator.SkillFile;
+import de.ust.skill.skillManipulator.internal.SkillFile;
+import de.ust.skill.skillManipulator.utils.FieldUtils;
 
 class AgeTest extends CommonTest{
 
@@ -27,18 +27,17 @@ class AgeTest extends CommonTest{
 	}
 	
 	@Test
-	void testRemoveAllv64() throws Exception {
-		Path path = tmpFile("age-example.remove.v64");
+	void testRemoveOfNonExistingType() throws Exception {
+		Path path = tmpFile("age-example.remove.field");
 
         SkillFile sf = SkillFile.open("src/test/resources/age/age-example.sf");
         sf.changePath(path);
         
-        // v64 => 11
-        FieldUtils.removeAllFieldsOfType(sf, 11);
+        Assertions.assertFalse(FieldUtils.removeField(sf, "age", "TYPE_DOES_NOT_EXIST"));
         
         sf.close();
         
-        SkillFile sfExpected = SkillFile.open("src/test/resources/age/age-example-without-field.sf");
+        SkillFile sfExpected = SkillFile.open("src/test/resources/age/age-example.sf");
         compareSkillFiles(sfExpected, sf);
 	}
 

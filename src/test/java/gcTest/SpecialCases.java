@@ -1,7 +1,5 @@
 package gcTest;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
@@ -9,9 +7,9 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 import common.CommonTest;
-import de.ust.skill.skillManipulator.GarbageCollector;
-import de.ust.skill.skillManipulator.SkillFile;
-import de.ust.skill.skillManipulator.GarbageCollector.CollectionRoot;
+import de.ust.skill.skillManipulator.gc.GarbageCollector;
+import de.ust.skill.skillManipulator.gc.CollectionRoot;
+import de.ust.skill.skillManipulator.internal.SkillFile;
 
 class SpecialCases extends CommonTest{
 

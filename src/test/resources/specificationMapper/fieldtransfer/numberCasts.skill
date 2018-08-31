@@ -1,0 +1,40 @@
+#! test
+
+S {}
+
+T:S {
+	const i8 a = 1;
+	const i16 b = 1;
+	const i32 c = 1;
+	const i64 d = 1;
+	const v64 e = 1;
+	
+	bool f;
+	
+	i16 g;
+	i8 h;
+	i16 i;
+	i32 j;
+	i64 k;
+	
+	i16 l;
+	i32 m;
+	
+	string n;
+}
+
+U:S {
+	i8[5] a;
+	i8[] b;
+	list<i8> c;
+	set<i8> d;
+	map<i8,i8,i8> e;
+}
+
+V:S {
+	S[5] a;
+	S[] b;
+	list<S> c;
+	set<S> d;
+	map<T,U,T> e;
+}

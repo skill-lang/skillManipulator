@@ -8,8 +8,8 @@ import org.junit.jupiter.api.Test;
 import common.CommonTest;
 import de.ust.skill.ir.TypeContext;
 import de.ust.skill.parser.Parser;
-import de.ust.skill.skillManipulator.SkillFile;
-import de.ust.skill.skillManipulator.SpecificationMapper;
+import de.ust.skill.skillManipulator.internal.SkillFile;
+import specificationMapping.SpecificationMapper;
 
 class ProjectToSupertype extends CommonTest{
 
@@ -22,7 +22,8 @@ class ProjectToSupertype extends CommonTest{
         TypeContext tc = Parser.process(new File("src/test/resources/specificationMapper/case1/newSpecification2.skill"), false, false, false, false);
 		tc = tc.removeSpecialDeclarations();
         
-        SpecificationMapper.map(tc, sf, path);
+		SkillFile newSf = SpecificationMapper.map(tc, sf, path);
+        newSf.close();
         
         SkillFile sfExpected = SkillFile.open("src/test/resources/specificationMapper/case1/result2.sf");
         compareSkillFiles(sfExpected, SkillFile.open(path.toString()));
@@ -37,7 +38,8 @@ class ProjectToSupertype extends CommonTest{
         TypeContext tc = Parser.process(new File("src/test/resources/specificationMapper/case2/newSpecification2.skill"), false, false, false, false);
 		tc = tc.removeSpecialDeclarations();
         
-        SpecificationMapper.map(tc, sf, path);
+		SkillFile newSf = SpecificationMapper.map(tc, sf, path);
+        newSf.close();
         
         SkillFile sfExpected = SkillFile.open("src/test/resources/specificationMapper/case2/result2.sf");
         compareSkillFiles(sfExpected, SkillFile.open(path.toString()));
@@ -52,7 +54,8 @@ class ProjectToSupertype extends CommonTest{
         TypeContext tc = Parser.process(new File("src/test/resources/specificationMapper/case2/newSpecification3.skill"), false, false, false, false);
 		tc = tc.removeSpecialDeclarations();
         
-        SpecificationMapper.map(tc, sf, path);
+		SkillFile newSf = SpecificationMapper.map(tc, sf, path);
+        newSf.close();
         
         SkillFile sfExpected = SkillFile.open("src/test/resources/specificationMapper/case2/result3.sf");
         compareSkillFiles(sfExpected, SkillFile.open(path.toString()));

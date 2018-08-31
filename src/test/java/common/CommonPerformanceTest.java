@@ -14,7 +14,7 @@ import org.junit.jupiter.api.AfterAll;
 
 import de.ust.skill.common.java.api.Access;
 import de.ust.skill.common.java.internal.SkillObject;
-import de.ust.skill.skillManipulator.SkillFile;
+import de.ust.skill.skillManipulator.internal.SkillFile;
 
 /**
  * This class is common for performance tests.
@@ -35,7 +35,6 @@ public abstract class CommonPerformanceTest extends CommonTest{
 	class TimeInformation {
 		long[] time = new long[executions];
 		long[] gcTime = new long[executions];
-		long[] cpuTime = new long[executions];
 		
 		int totalObjects = -1;
 		String filename;
@@ -64,8 +63,6 @@ public abstract class CommonPerformanceTest extends CommonTest{
 
 	        if(i == -1) ti.totalObjects = countObjects(sf);
 
-	        long startCPU = ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime();
-
 	        long startGcTime = getGarbageCollectionTime();
 	        
 	        long start = System.currentTimeMillis();
@@ -77,13 +74,10 @@ public abstract class CommonPerformanceTest extends CommonTest{
 	        long end = System.currentTimeMillis();
 	        
 	        long endGcTime = getGarbageCollectionTime();
-
-	        long endCPU = ManagementFactory.getThreadMXBean().getCurrentThreadCpuTime();
 	        
 	        if(i != -1) {
 		        ti.time[i] = end - start;
 		        ti.gcTime[i] = endGcTime - startGcTime;
-		        ti.cpuTime[i] = Math.round((endCPU - startCPU) / 1E6);
 		        System.out.println("finished (" + ti.time[i] + " ms)");
 	        }
 	         
@@ -112,7 +106,7 @@ public abstract class CommonPerformanceTest extends CommonTest{
 		String filename = new SimpleDateFormat("'output/performanceTest-'yyyy-MM-dd-HH-mm-ss'.csv'").format(new Date());
 		PrintWriter pw = new PrintWriter(new File(filename));
         StringBuilder sb = new StringBuilder();
-        sb.append("filename,object count,time(ms),gc time(ms),cpu time(ms)\n");
+        sb.append("filename,object count,time(ms),gc time(ms)\n");
 	
 		for(TimeInformation ti : timeInfos) {
 			System.out.println(ti.filename);
@@ -121,7 +115,7 @@ public abstract class CommonPerformanceTest extends CommonTest{
 			double average = 0;
 			for (int i = 0; i < ti.time.length; i++) {
 				sb.append(ti.filename).append(",").append(ti.totalObjects).append(",").append(ti.time[i])
-					.append(",").append(ti.gcTime[i]).append(",").append(ti.cpuTime[i]).append("\n");
+					.append(",").append(ti.gcTime[i]).append(",").append("\n");
 				average += ti.time[i];
 			}
 			

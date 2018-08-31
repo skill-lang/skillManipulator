@@ -1,0 +1,17 @@
+#! test
+
+A {
+	annotation a;
+}
+
+B:A {
+	bool b;
+}
+
+C:A {
+	set<A> c;
+}
+
+D:B {
+	map<B,A> d;
+}
