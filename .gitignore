@@ -1,5 +1,5 @@
-.classpath
-.settings/
 bin/
 output/
-.attach_pid*
+.*
+project/**
+target/**
