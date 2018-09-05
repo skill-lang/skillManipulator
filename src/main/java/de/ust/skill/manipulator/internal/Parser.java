@@ -1,4 +1,4 @@
-package de.ust.skill.skillManipulator.internal;
+package de.ust.skill.manipulator.internal;
 
 import java.util.ArrayList;
 import java.util.HashSet;

@@ -1,4 +1,4 @@
-package de.ust.skill.skillManipulator.internal;
+package de.ust.skill.manipulator.internal;
 
 import java.io.File;
 import java.io.IOException;

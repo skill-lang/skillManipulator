@@ -1,4 +1,4 @@
-package specificationMapping;
+package de.ust.skill.manipulator.specificationMapping;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -66,7 +66,7 @@ import de.ust.skill.ir.restriction.NonNullRestriction;
 import de.ust.skill.ir.restriction.SingletonRestriction;
 import de.ust.skill.ir.restriction.StringDefaultRestriction;
 import de.ust.skill.ir.restriction.UniqueRestriction;
-import de.ust.skill.skillManipulator.internal.SkillState;
+import de.ust.skill.manipulator.internal.SkillState;
 
 public class StateCreator {
 
@@ -109,7 +109,12 @@ public class StateCreator {
 			TypeRestriction tr;
 			for(Restriction r : utype.getRestrictions()) {
 				tr = createTypeRestriction(r);
-				if(tr != null) newPool.addRestriction(tr);
+				if(tr != null) {
+					newPool.addRestriction(tr);
+					if(tr instanceof DefaultValue) {
+						newPool.defaultValue = (DefaultValue<?>) tr;
+					}
+				}
 			}
 			
 			// put new pool in map and list
@@ -149,7 +154,6 @@ public class StateCreator {
 								newField.addRestriction(fr);
 								if(fr instanceof DefaultValue) {
 									newField.defaultValue = (DefaultValue<?>) fr;
-									((DefaultValue<?>) fr).setDefaultValue();
 								}
 							}
 						}

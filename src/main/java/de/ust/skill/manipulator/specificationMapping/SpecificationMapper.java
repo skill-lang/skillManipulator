@@ -1,4 +1,4 @@
-package specificationMapping;
+package de.ust.skill.manipulator.specificationMapping;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -23,14 +23,19 @@ import de.ust.skill.common.java.internal.fieldTypes.MapType;
 import de.ust.skill.common.java.internal.fieldTypes.SingleArgumentType;
 import de.ust.skill.common.java.internal.parts.Block;
 import de.ust.skill.ir.TypeContext;
-import de.ust.skill.skillManipulator.internal.SkillFile;
-import de.ust.skill.skillManipulator.internal.SkillState;
-import de.ust.skill.skillManipulator.utils.FieldUtils;
+import de.ust.skill.manipulator.internal.SkillFile;
+import de.ust.skill.manipulator.internal.SkillState;
+import de.ust.skill.manipulator.specificationMapping.MappingfileParser.MappingFileParser;
+import de.ust.skill.manipulator.specificationMapping.MappingfileParser.ParseException;
+import de.ust.skill.manipulator.specificationMapping.MappingfileParser.TypeMapping;
+import de.ust.skill.manipulator.utils.FieldUtils;
 
 public class SpecificationMapper {
 	
 	// maps pools from old state to new state
 	protected Map<StoragePool<?,?>, StoragePool<?,?>> poolMapping = new HashMap<>();
+	
+	private Map<String, TypeMapping> typeMappings = null;
 	
 	protected SkillState newState;
 	private SkillState oldState;
@@ -46,29 +51,25 @@ public class SpecificationMapper {
 	
 	private SpecificationMapper() {}
 	
-	public static SkillFile map(TypeContext tc, SkillFile sf, Path targetPath) {
+	public static SkillFile map(TypeContext tc, SkillFile sf, Path targetPath, String mappingfile) throws ParseException, IOException, InterruptedException {
 		SpecificationMapper mapper = new SpecificationMapper();
 		MappingLog.clearLog();
 		
 		mapper.oldState = (SkillState)sf;
 		
-		try {
-			mapper.newState = StateCreator.createNewState(tc, targetPath);
-		} catch (IOException e) {
-			// TODO can not create state, abort
-			e.printStackTrace();
+		if(mappingfile != null) {
+			mapper.typeMappings = MappingFileParser.parseFile(mappingfile);
 		}
+		
+		mapper.newState = StateCreator.createNewState(tc, targetPath);
 		
 		mapper.mapStates();
 		
-		try {
-			mapper.transferObjects();
-		} catch (InterruptedException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-
+		mapper.transferObjects();
+	
 		mapper.transferFields();
+		
+		mapper.newState.check();
 		
 		// TODO remove print
 		mapper.newState.prettyPrint();
@@ -76,7 +77,10 @@ public class SpecificationMapper {
 		System.out.println(MappingLog.printLog());
 		
 		return mapper.newState;
-
+	}
+	
+	public static SkillFile map(TypeContext tc, SkillFile sf, Path targetPath) throws IOException,InterruptedException, ParseException {
+		return map(tc, sf, targetPath, null);
 	}
 		
 	private void mapStates() {
@@ -88,7 +92,7 @@ public class SpecificationMapper {
 		
 		for(StoragePool<?, ?> oldPool : oldState.getTypes()) {
 			// get name equivalent pool in new state
-			newPool = newState.pool(oldPool.name());
+			newPool = newState.pool(getTypeName(oldPool.name()));
 			
 			// if new pool is null, we want to project the type to one of its superpools
 			// because of the type order we can take the mapping of the direct supertype
@@ -116,6 +120,17 @@ public class SpecificationMapper {
 			oldLbpoMap[oldPool.typeID-32] = lbpo;
 			lbpo += oldPool.staticDataInstances;
 		}
+	}
+
+	private String getTypeName(String name) {
+		if(typeMappings != null) {
+			TypeMapping tm = typeMappings.get(name);
+			if(tm != null) {
+				String newName = tm.getNewTypename();
+				if(newName != null) return newName;
+			}
+		}
+		return name;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -152,8 +167,10 @@ public class SpecificationMapper {
 			while(fit.hasNext()) {
 				FieldDeclaration<T, ?> next = (FieldDeclaration<T, ?>) fit.next();
 				Object defValue = FieldUtils.getDefaultValue(next);
-				ValueConversion conv = dispatchConversion(next.type());
-				defValue = conv.convert(defValue);
+				if(next.type().typeID < 32) {
+					ValueConversion conv = dispatchConversion(next.type());
+					defValue = conv.convert(defValue);
+				}
 				for(SkillObject o : next.owner()) {
 					next.set(o, (T)defValue);
 				}
@@ -181,9 +198,10 @@ public class SpecificationMapper {
 					
 					// skip constant fields
 					if(oldField.type().typeID > 4) {
+						String searchString = getFieldName(oldField);
 						
 						// search for right field in fields of new type
-						newField = searchField(oldField.name(), newPool);
+						newField = searchField(searchString, newPool);
 						
 						if(newField != null) {
 							if(checker.fieldsCompatible(oldField, newField)) transferFieldData(oldField, newField, oldPool);
@@ -197,6 +215,17 @@ public class SpecificationMapper {
 				}
 			}
 		}
+	}
+
+	private String getFieldName(FieldDeclaration<?, ?> oldField) {
+		if(typeMappings != null) {
+			TypeMapping tm = typeMappings.get(oldField.owner().name());
+			if(tm != null) {
+				String name = tm.getFieldMapping(oldField.name());
+				if(name != null) return name;
+			}
+		}
+		return oldField.name();
 	}
 
 	private FieldDeclaration<?,?> searchField(String fieldname, StoragePool<?, ?> newPool) {

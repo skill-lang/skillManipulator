@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import common.CommonTest;
-import de.ust.skill.skillManipulator.internal.SkillFile;
-import de.ust.skill.skillManipulator.utils.FieldUtils;
+import de.ust.skill.manipulator.internal.SkillFile;
+import de.ust.skill.manipulator.utils.FieldUtils;
 
 class AgeTest extends CommonTest{
 

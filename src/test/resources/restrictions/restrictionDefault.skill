@@ -1,0 +1,55 @@
+#! restrictionDefault
+
+@default(System)
+@abstract
+Properties {
+}
+
+/* some regular property */
+RegularProperty : Properties {
+}
+
+/* some properties of the target system */
+@singleton
+System : Properties {
+
+  @constantLengthPointer
+  @nonnull
+  string name;
+
+  @default(1.1)
+  f32 version;
+}
+
+@Singleton
+None : Properties {}
+
+
+DefaultBoarderCases {
+  @default(System)
+  annotation systemDef;
+
+  @default(None)
+  Properties noneDef;
+
+  @default(127)
+  i8 a;
+  
+  @default(128)
+  i16 b;
+
+  @default(-1000)
+  i32 c;
+  
+  @default(10000)
+  i64 d;
+  
+  @default(1.5)
+  f32 e;
+  
+  @default(3.14)
+  f64 f;
+  
+  @default("This is my string")
+  string s;
+}

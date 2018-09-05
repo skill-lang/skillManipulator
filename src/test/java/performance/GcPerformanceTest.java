@@ -13,9 +13,9 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
 import common.CommonPerformanceTest;
-import de.ust.skill.skillManipulator.gc.GarbageCollector;
-import de.ust.skill.skillManipulator.gc.CollectionRoot;
-import de.ust.skill.skillManipulator.internal.SkillFile;
+import de.ust.skill.manipulator.gc.CollectionRoot;
+import de.ust.skill.manipulator.gc.GarbageCollector;
+import de.ust.skill.manipulator.internal.SkillFile;
 
 /**
  * This is an automated Performance Test for the Garbage Collector.

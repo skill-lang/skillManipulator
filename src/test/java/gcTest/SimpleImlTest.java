@@ -11,9 +11,9 @@ import org.junit.jupiter.api.Test;
 import common.CommonTest;
 import de.ust.skill.common.java.api.Access;
 import de.ust.skill.common.java.internal.SkillObject;
-import de.ust.skill.skillManipulator.gc.GarbageCollector;
-import de.ust.skill.skillManipulator.gc.CollectionRoot;
-import de.ust.skill.skillManipulator.internal.SkillFile;
+import de.ust.skill.manipulator.gc.CollectionRoot;
+import de.ust.skill.manipulator.gc.GarbageCollector;
+import de.ust.skill.manipulator.internal.SkillFile;
 
 class SimpleImlTest extends CommonTest{
 	

@@ -1,4 +1,4 @@
-package de.ust.skill.skillManipulator.gc;
+package de.ust.skill.manipulator.gc;
 
 /**
  * The Garbage Collector uses instances of this class as root elements for the

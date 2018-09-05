@@ -20,8 +20,8 @@ import de.ust.skill.common.java.internal.SkillObject;
 import de.ust.skill.common.java.internal.StaticFieldIterator;
 import de.ust.skill.common.java.internal.StoragePool;
 import de.ust.skill.common.java.restrictions.FieldRestriction;
-import de.ust.skill.skillManipulator.internal.SkillFile;
-import de.ust.skill.skillManipulator.internal.SkillState;
+import de.ust.skill.manipulator.internal.SkillFile;
+import de.ust.skill.manipulator.internal.SkillState;
 
 public abstract class CommonTest {
 

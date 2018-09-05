@@ -1,4 +1,4 @@
-package de.ust.skill.skillManipulator.gc;
+package de.ust.skill.manipulator.gc;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -15,10 +15,10 @@ import de.ust.skill.common.java.internal.SkillObject;
 import de.ust.skill.common.java.internal.StoragePool;
 import de.ust.skill.common.java.internal.fieldTypes.MapType;
 import de.ust.skill.common.java.internal.fieldTypes.SingleArgumentType;
-import de.ust.skill.skillManipulator.internal.SkillFile;
-import de.ust.skill.skillManipulator.internal.SkillState;
-import de.ust.skill.skillManipulator.utils.FieldUtils;
-import de.ust.skill.skillManipulator.utils.TypeUtils;
+import de.ust.skill.manipulator.internal.SkillFile;
+import de.ust.skill.manipulator.internal.SkillState;
+import de.ust.skill.manipulator.utils.FieldUtils;
+import de.ust.skill.manipulator.utils.TypeUtils;
 
 /**
  * GarbageCollector deletes all Objects that are not reachable from the root set

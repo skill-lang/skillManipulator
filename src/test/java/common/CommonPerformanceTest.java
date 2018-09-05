@@ -14,7 +14,7 @@ import org.junit.jupiter.api.AfterAll;
 
 import de.ust.skill.common.java.api.Access;
 import de.ust.skill.common.java.internal.SkillObject;
-import de.ust.skill.skillManipulator.internal.SkillFile;
+import de.ust.skill.manipulator.internal.SkillFile;
 
 /**
  * This class is common for performance tests.

@@ -13,9 +13,9 @@ import org.junit.jupiter.api.TestFactory;
 
 import common.CommonTest;
 import de.ust.skill.ir.TypeContext;
+import de.ust.skill.manipulator.internal.SkillFile;
+import de.ust.skill.manipulator.specificationMapping.SpecificationMapper;
 import de.ust.skill.parser.Parser;
-import de.ust.skill.skillManipulator.internal.SkillFile;
-import specificationMapping.SpecificationMapper;
 
 class NumberCastFail extends CommonTest{
 

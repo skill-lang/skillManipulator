@@ -11,8 +11,8 @@ import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
 import common.CommonPerformanceTest;
-import de.ust.skill.skillManipulator.internal.SkillFile;
-import de.ust.skill.skillManipulator.utils.FieldUtils;
+import de.ust.skill.manipulator.internal.SkillFile;
+import de.ust.skill.manipulator.utils.FieldUtils;
 
 class FieldRemovePerformanceTest extends CommonPerformanceTest{
 	private static final int EXECUTIONS = 10;

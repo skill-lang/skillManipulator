@@ -1,4 +1,4 @@
-package specificationMapping;
+package de.ust.skill.manipulator.specificationMapping;
 
 import java.util.HashMap;
 import java.util.HashSet;

@@ -1,14 +1,15 @@
-package de.ust.skill.skillManipulator.utils;
+package de.ust.skill.manipulator.utils;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.ust.skill.common.java.internal.SkillObject;
 import de.ust.skill.common.java.internal.StaticDataIterator;
 import de.ust.skill.common.java.internal.StoragePool;
 import de.ust.skill.common.java.internal.TypeHierarchyIterator;
-import de.ust.skill.skillManipulator.internal.SkillFile;
-import de.ust.skill.skillManipulator.internal.SkillState;
+import de.ust.skill.manipulator.internal.SkillFile;
+import de.ust.skill.manipulator.internal.SkillState;
 
 /**
  * Util-class provides static methods for types
@@ -48,16 +49,18 @@ public final class TypeUtils {
 	 * 3. delete all fields that have references on the type and its subtypes
 	 * 4. remove type and its subtypes from state
 	 * 5. renew typeIDs and next pointers
+	 * @param <T>
+	 * @param <B>
 	 * 
 	 * @param state
 	 * @param type
 	 */
-	public static boolean deleteType(SkillState state, StoragePool<?,?> type) {
+	public static <T extends B,B extends SkillObject> boolean deleteType(SkillState state, StoragePool<? extends T, B> type) {
 		ArrayList<StoragePool<?, ?>> types = state.getTypes();
 
 		// add all subtypes to remove them too and delete their objects
 		Set<StoragePool<?, ?>> deleteTypes = new HashSet<>();
-		TypeHierarchyIterator<?, ?> it = new TypeHierarchyIterator<>(type);
+		TypeHierarchyIterator<?, ?> it = (TypeHierarchyIterator<T, B>) new TypeHierarchyIterator<>(type);
 		StaticDataIterator<?> sit;
 		while(it.hasNext()) {
 			StoragePool<?, ?> pool = it.next();
@@ -86,9 +89,9 @@ public final class TypeUtils {
 	 * @param type - string of type name
 	 * @return
 	 */
-	public static boolean deleteType(SkillFile sf, String type) {
+	public static <T extends B,B extends SkillObject> boolean deleteType(SkillFile sf, String type) {
 		SkillState state = (SkillState)sf;
-		StoragePool<?, ?> pool = state.pool(type);
+		StoragePool<? extends T, B> pool = (StoragePool<? extends T, B>) state.pool(type);
 
 		if(pool == null) {
 			return false;

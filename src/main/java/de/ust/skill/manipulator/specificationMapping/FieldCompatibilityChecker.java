@@ -1,4 +1,4 @@
-package specificationMapping;
+package de.ust.skill.manipulator.specificationMapping;
 
 import java.util.Collection;
 import java.util.Map;
@@ -319,7 +319,9 @@ public class FieldCompatibilityChecker {
 		TypeRelation staticCheck(FieldType<?> oldType) {
 			int id = oldType.typeID;
 			if(id == 15) {
-				if(cla.length == ((ConstantLengthArray<?>)oldType).length) return TypeRelation.COMPATIBLE;
+				if(cla.length == ((ConstantLengthArray<?>)oldType).length) {
+					return groundTypeCheck.staticCheck(((SingleArgumentType<?, ?>)oldType).groundType);
+				}
 			} else if(17 <= id && id <= 19) {
 				// for all other single argument types we need a dynamic size check, so we return downcast if groundTypes are not unrelated
 				if(groundTypeCheck.staticCheck(((SingleArgumentType<?, ?>)oldType).groundType) != TypeRelation.NOT_COMPATIBLE) return TypeRelation.DYN_CHECK_NEEDED;

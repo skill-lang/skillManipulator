@@ -1,0 +1,60 @@
+/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.28+ wizard for JavaCC 1.5.0+
+ */options{  static = false;}PARSER_BEGIN(MappingFileParser)package de.ust.skill.manipulator.specificationMapping.MappingfileParser;
+
+import java.io.FileInputStream;
+import java.util.Map;
+import java.util.HashMap;
+import java.io.FileNotFoundException;
+
+public class MappingFileParser{  public static Map<String, TypeMapping> parseFile(String mappingfile) throws ParseException, FileNotFoundException  {    MappingFileParser parser = new MappingFileParser(new FileInputStream(mappingfile));
+
+    Map<String, TypeMapping> typeMappings = new HashMap<String, TypeMapping>(); 
+    parser.mappingfile(typeMappings);
+    return typeMappings;  }}PARSER_END(MappingFileParser)SKIP :{  " "| "\r"| "\t"| "\n"}TOKEN : {  < SKILLNAME : ["a"-"z","A"-"Z","_","\u007f"-"\uffff"](["A"-"Z","a"-"z","0"-"9","_","\u007f"-"\uffff"])* >
+| < #UNICODE_LETTER : ["\u007f"-"\uffff"] >}void mappingfile(Map<String, TypeMapping> typeMappings) :{
+  TypeMapping t;
+}{  (    t = mapping() { typeMappings.put(t.getTypename(), t); }
+  )*}
+TypeMapping mapping() :
+{
+  Token t;
+  TypeMapping tm;
+}
+{  t = < SKILLNAME > { tm = new TypeMapping(t.toString());}
+  (    (
+      typeMapping(tm)
+    )
+  |
+    (
+      fieldMapping(tm)
+    )
+  )
+  { return tm;}
+}
+
+void typeMapping(TypeMapping tm) :
+{
+  Token t;
+}
+{
+  "->"
+  t = < SKILLNAME > { tm.setNewTypename(t.toString()); }
+  (    fieldMapping(tm)
+  )? 
+}
+
+void fieldMapping(TypeMapping tm) :
+{
+  Token t1,t2;
+}
+{
+  "{"
+  (    t1 = < SKILLNAME >
+    "->"
+    t2 = < SKILLNAME >
+    { tm.addFieldMapping(t1.toString(), t2.toString()); }
+  )+
+  "}"
+}
+  

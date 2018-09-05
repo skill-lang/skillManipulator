@@ -1,4 +1,4 @@
-package de.ust.skill.skillManipulator.cli;
+package de.ust.skill.manipulator;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,13 +18,13 @@ import org.apache.commons.cli.ParseException;
 
 import de.ust.skill.common.java.api.SkillException;
 import de.ust.skill.ir.TypeContext;
+import de.ust.skill.manipulator.gc.CollectionRoot;
+import de.ust.skill.manipulator.gc.GarbageCollector;
+import de.ust.skill.manipulator.internal.SkillFile;
+import de.ust.skill.manipulator.specificationMapping.SpecificationMapper;
+import de.ust.skill.manipulator.utils.FieldUtils;
+import de.ust.skill.manipulator.utils.TypeUtils;
 import de.ust.skill.parser.Parser;
-import de.ust.skill.skillManipulator.gc.GarbageCollector;
-import de.ust.skill.skillManipulator.internal.SkillFile;
-import de.ust.skill.skillManipulator.gc.CollectionRoot;
-import de.ust.skill.skillManipulator.utils.FieldUtils;
-import de.ust.skill.skillManipulator.utils.TypeUtils;
-import specificationMapping.SpecificationMapper;
 
 public class CLI {
 	private static CommandLine line; 
@@ -101,7 +101,20 @@ public class CLI {
 		}
 		
 		if(outpath == null) outpath = sf.currentPath();
-		SkillFile newSf = SpecificationMapper.map(tc, sf, outpath);
+		SkillFile newSf;
+		try {
+			newSf = SpecificationMapper.map(tc, sf, outpath);
+		} catch (IOException e) {
+			System.out.println("Error while creating new Skillfile.");
+			return;
+		} catch (InterruptedException e) {
+			System.out.println("Error while transferring objects.");
+			return;
+		} catch (de.ust.skill.manipulator.specificationMapping.MappingfileParser.ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return;
+		}
 		
 		if(!line.hasOption("d")) newSf.close();
 	}
