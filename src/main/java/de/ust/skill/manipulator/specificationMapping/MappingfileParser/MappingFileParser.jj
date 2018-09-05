@@ -1,6 +1,7 @@
 /**
  * JavaCC template file created by SF JavaCC plugin 1.5.28+ wizard for JavaCC 1.5.0+
- */options{  static = false;}PARSER_BEGIN(MappingFileParser)package de.ust.skill.manipulator.specificationMapping.MappingfileParser;
+ */options{  static = false;
+  UNICODE_INPUT=true;}PARSER_BEGIN(MappingFileParser)package de.ust.skill.manipulator.specificationMapping.MappingfileParser;
 
 import java.io.FileInputStream;
 import java.util.Map;
