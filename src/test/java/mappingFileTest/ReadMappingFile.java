@@ -47,6 +47,26 @@ class ReadMappingFile extends CommonTest{
 		Assertions.assertNull(t3.getNewTypename());
 		Assertions.assertEquals("gamma", t3.getFieldMapping("delta"));
 	}
+	
+	@Test
+	void testReadUnicode() throws ParseException, FileNotFoundException {
+		String file = "src/test/resources/specificationMapper/mappingFiles/unicodeChars.map";
+		
+		Map<String, TypeMapping> typeMappings = MappingFileParser.parseFile(file);
+		
+		TypeMapping t1 = typeMappings.get("∀");
+		Assertions.assertEquals("∀", t1.getTypename());
+		Assertions.assertNull(t1.getNewTypename());
+		Assertions.assertEquals("π", t1.getFieldMapping("∃"));
+		Assertions.assertEquals("λ", t1.getFieldMapping("∀"));
+	
+		TypeMapping t2 = typeMappings.get("∃");
+		Assertions.assertEquals("∃", t2.getTypename());
+		Assertions.assertNull(t2.getNewTypename());
+		Assertions.assertEquals("☢", t2.getFieldMapping("∃"));
+		Assertions.assertEquals("⇀", t2.getFieldMapping("∀"));
+		
+	}
 
 	@TestFactory
     Stream<DynamicTest> dynamicTestsFromStream() throws Exception {
