@@ -31,6 +31,8 @@ DefaultBoarderCases {
 
   @default(None)
   Properties noneDef;
+  
+  Properties defaultTypeTest;
 
   @default(127)
   i8 a;

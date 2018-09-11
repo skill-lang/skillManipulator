@@ -20,6 +20,7 @@ import de.ust.skill.common.java.internal.SkillObject;
 import de.ust.skill.common.java.internal.StaticFieldIterator;
 import de.ust.skill.common.java.internal.StoragePool;
 import de.ust.skill.common.java.restrictions.FieldRestriction;
+import de.ust.skill.common.java.restrictions.TypeRestriction;
 import de.ust.skill.manipulator.internal.SkillFile;
 import de.ust.skill.manipulator.internal.SkillState;
 
@@ -142,9 +143,22 @@ public abstract class CommonTest {
 			Assertions.assertEquals(expectedType.typeID, actualType.typeID);
 			Assertions.assertEquals(expectedType.name(), actualType.name());
 			Assertions.assertEquals(expectedType.size(), actualType.size());
+			compareTypeRestrictions(expectedType, actualType);
 			compareFields(expectedType.allFields(), actualType.allFields());
 		}
 		
+	}
+
+	private static void compareTypeRestrictions(StoragePool<?, ?> expectedType, StoragePool<?, ?> actualType) {
+		boolean found;
+		for(TypeRestriction expRest : expectedType.restrictions) {
+			found = false;
+			for(TypeRestriction actRest : actualType.restrictions) {
+				if(expRest.equals(actRest)) found = true;
+			}
+			Assertions.assertTrue(found, "Restriction " + expRest + " missing for type " + expectedType);
+		}
+		Assertions.assertEquals(expectedType.restrictions.size(), actualType.restrictions.size());
 	}
 
 	private static void compareFields(FieldIterator expFieldsIt, FieldIterator actFieldsIt) {

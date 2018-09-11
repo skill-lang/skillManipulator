@@ -22,6 +22,7 @@ import de.ust.skill.ir.TypeContext;
 import de.ust.skill.manipulator.internal.SkillFile;
 import de.ust.skill.manipulator.specificationMapping.SpecificationMapper;
 import de.ust.skill.parser.Parser;
+import de.ust.skill.manipulator.internal.SkillState;
 
 class RestrictionsAll extends CommonTest{
 
@@ -31,30 +32,12 @@ class RestrictionsAll extends CommonTest{
 
         SkillFile sf = SkillFile.open("src/test/resources/restrictions/restrictionsAll.sf");
         sf.changePath(path);
-        
+        ((SkillState)sf).prettyPrint();
         sf.close();
         
         SkillFile sfActual = SkillFile.open(path);
         SkillFile sfExpected = SkillFile.open("src/test/resources/restrictions/restrictionsAll.sf");
         compareSkillFiles(sfExpected, sfActual);
-	}
-	
-	@Test
-	void violateMonotone() throws Exception {
-		Path path = tmpFile("violate.monotone");
-
-        SkillFile sf = SkillFile.open("src/test/resources/restrictions/restrictionsAll.sf");
-        sf.changePath(path);
-        for(Access<? extends SkillObject> t : sf.allTypes()) {
-        	if(t.name().equals("term")) {
-        		StaticDataIterator<? extends SkillObject> sit = t.staticInstances();
-        		SkillObject o = sit.next();
-        		sf.delete(o);
-        		break;
-        	}
-        }
-        
-        Assertions.assertThrows(SkillException.class, () -> { sf.close(); });
 	}
 	
 	@TestFactory

@@ -38,6 +38,7 @@ import de.ust.skill.ir.restriction.StringDefaultRestriction
 import de.ust.skill.ir.restriction.UniqueRestriction
 import de.ust.skill.ir.restriction.DefaultRestriction
 import de.ust.skill.ir.restriction.CodingRestriction
+import de.ust.skill.ir.restriction.OneOfRestriction
 
 /**
  * Converts a character stream into an AST using parser combinators.
@@ -222,7 +223,7 @@ abstract class AbstractFileParser[Decl](
 
       case "abstract"  ⇒ opt("(" ~ ")") ^^ { _ ⇒ new AbstractRestriction }
 
-      case "default"   ⇒ "(" ~> defaultRestrictionParameter <~ ")" ^^ { _ ⇒ null }
+      case "default"   ⇒ "(" ~> repsep(id, "." | "::") <~ ")" ^^ { names ⇒ new NameDefaultRestriction(names.map(_.ir)) }
 
       case unknown ⇒ opt("(" ~> repsep((int | string | floatingPointNumber), ",") <~ ")") ^^ { arg ⇒
         ParseException(s"$unknown${
@@ -268,7 +269,7 @@ abstract class AbstractFileParser[Decl](
 
       case "constantlengthpointer" ⇒ opt("(" ~ ")") ^^ { _ ⇒ new ConstantLengthPointerRestriction }
 
-      case "oneof"                 ⇒ ("(" ~> repsep(id, ",") <~ ")") ^^ { _ ⇒ null }
+      case "oneof"                 ⇒ ("(" ~> repsep(id, ",") <~ ")") ^^ { names ⇒ new OneOfRestriction(names.map(_.ir)) }
 
       case unknown ⇒ opt("(" ~> repsep((int | string | floatingPointNumber), ",") <~ ")") ^^ { arg ⇒
         ParseException(s"$unknown${

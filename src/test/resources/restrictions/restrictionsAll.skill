@@ -89,7 +89,7 @@ Comment {
   @oneOf(Operator, Term, Comment)
   annotation target;
 
-  @oneOf(None, System)
+  @oneOf(RegularProperty)
   Properties property;
 }
 

@@ -40,6 +40,7 @@ import de.ust.skill.common.java.restrictions.DefaultValue;
 import de.ust.skill.common.java.restrictions.FieldRestriction;
 import de.ust.skill.common.java.restrictions.Monotone;
 import de.ust.skill.common.java.restrictions.NonNull;
+import de.ust.skill.common.java.restrictions.OneOf;
 import de.ust.skill.common.java.restrictions.Range;
 import de.ust.skill.common.java.restrictions.Singleton;
 import de.ust.skill.common.java.restrictions.TypeRestriction;
@@ -48,6 +49,7 @@ import de.ust.skill.common.jvm.streams.FileInputStream;
 import de.ust.skill.ir.ConstantLengthArrayType;
 import de.ust.skill.ir.Field;
 import de.ust.skill.ir.GroundType;
+import de.ust.skill.ir.Name;
 import de.ust.skill.ir.Restriction;
 import de.ust.skill.ir.Type;
 import de.ust.skill.ir.TypeContext;
@@ -63,6 +65,7 @@ import de.ust.skill.ir.restriction.IntRangeRestriction;
 import de.ust.skill.ir.restriction.MonotoneRestriction;
 import de.ust.skill.ir.restriction.NameDefaultRestriction;
 import de.ust.skill.ir.restriction.NonNullRestriction;
+import de.ust.skill.ir.restriction.OneOfRestriction;
 import de.ust.skill.ir.restriction.SingletonRestriction;
 import de.ust.skill.ir.restriction.StringDefaultRestriction;
 import de.ust.skill.ir.restriction.UniqueRestriction;
@@ -207,6 +210,11 @@ public class StateCreator {
 		}
 		if(r instanceof ConstantLengthPointerRestriction) {
 			return ConstantLengthPointer.get();
+		}
+		if(r instanceof OneOfRestriction) {
+			ArrayList<StoragePool<?,?>> oneOfTypes = new ArrayList<>();
+			for(Name n : ((OneOfRestriction)r).getOneOfNames()) oneOfTypes.add(poolByName.get(n.getSkillName()));
+			return new OneOf<SkillObject>(oneOfTypes);
 		}
 		return null;
 	}
