@@ -14,10 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import common.CommonTest;
-import de.ust.skill.common.java.api.Access;
 import de.ust.skill.common.java.api.SkillException;
-import de.ust.skill.common.java.internal.SkillObject;
-import de.ust.skill.common.java.internal.StaticDataIterator;
 import de.ust.skill.ir.TypeContext;
 import de.ust.skill.manipulator.internal.SkillFile;
 import de.ust.skill.manipulator.specificationMapping.SpecificationMapper;
