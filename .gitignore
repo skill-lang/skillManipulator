@@ -1,5 +1,8 @@
 bin/
 output/
 .*
+target/**
+
 project/**
+!project/plugins.sbt
 target/**
