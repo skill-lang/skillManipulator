@@ -91,7 +91,7 @@ public class FieldCompatibilityChecker {
 		
 		@Override
 		TypeRelation staticCheck(FieldType<?> oldType) {
-			if(oldType.typeID == 5) return TypeRelation.COMPATIBLE;
+			if(oldType.typeID == 5 || oldType.typeID >= 32) return TypeRelation.COMPATIBLE;
 			return TypeRelation.NOT_COMPATIBLE;
 		}
 
