@@ -9,8 +9,12 @@ javacOptions ++= Seq("-encoding", "UTF-8")
 compileOrder := CompileOrder.Mixed
 
 libraryDependencies ++= Seq(
-    "org.junit.jupiter" % "junit-jupiter-engine" % "5.0.0-M3" % "test"
+    "org.junit.jupiter" % "junit-jupiter-engine" % "5.1.0" % "test"
 )
+
+javaOptions ++= Seq("-Xmx4G","-Xms4G","-XX:MaxHeapFreeRatio=100")
+
+resolvers in ThisBuild += Resolver.jcenterRepo
 
 lazy val root = (project in file(".")).
     settings(
