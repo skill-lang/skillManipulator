@@ -2,21 +2,17 @@ package specificationMappingTest;
 
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
 import common.CommonTest;
-import common.SkillfileComparator;
-import de.ust.skill.ir.TypeContext;
-import de.ust.skill.manipulator.internal.SkillFile;
-import de.ust.skill.manipulator.specificationMapping.SpecificationMapper;
-import de.ust.skill.parser.Parser;
 
 public abstract class CommonSpecificationMappingTest extends CommonTest {
 	private final String sourceFolder;
@@ -24,7 +20,7 @@ public abstract class CommonSpecificationMappingTest extends CommonTest {
 	
 	protected CommonSpecificationMappingTest(String sourceFolder, String startfile) {
 		this.sourceFolder = sourceFolder;
-		this.startfile = startfile;
+		this.startfile = sourceFolder + startfile;
 	}
 	
 	@TestFactory
@@ -40,18 +36,12 @@ public abstract class CommonSpecificationMappingTest extends CommonTest {
 	private void executeMapping(Path srcPath) throws Exception {
 		String src = srcPath.toString();
 		String expected = src.replaceAll(".skill", ".sf");
-
-		Path path = tmpFile(src);
-
-        SkillFile sf = SkillFile.open(sourceFolder + startfile);
-
-        TypeContext tc = Parser.process(new File(srcPath.toString()), false, false, false, false);
-		tc = tc.removeSpecialDeclarations();
-        
-		SkillFile newSf = SpecificationMapper.map(tc, sf, path);
-        newSf.close();
-        
-        SkillFile sfExpected = SkillFile.open(expected);
-        SkillfileComparator.compareSkillFiles(sfExpected, SkillFile.open(path.toString()));
+		
+		List<String> args = new ArrayList<>();
+		args.add("-map");
+		
+		args.add("-spec"); args.add(src);
+		
+        executeCliTest(startfile, expected, args);
 	}
 }
