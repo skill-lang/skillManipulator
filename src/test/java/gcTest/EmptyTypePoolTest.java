@@ -1,149 +1,25 @@
 package gcTest;
 
-import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.Set;
-
-import org.junit.jupiter.api.Test;
-
-import common.CommonTest;
-import de.ust.skill.manipulator.gc.CollectionRoot;
-import de.ust.skill.manipulator.gc.GarbageCollector;
-import de.ust.skill.manipulator.internal.SkillFile;
-
-class EmptyTypePoolTest extends CommonTest{
-
-	@Test
-	void testReference() throws Exception {
-		Path path = tmpFile("reference");
-
-        SkillFile sf = SkillFile.open("src/test/resources/emptyTypePool/reference/reference.sf");
-        sf.changePath(path);
-        
-        Set<CollectionRoot> roots = new HashSet<>();
-        roots.add(new CollectionRoot("t"));
-        
-        GarbageCollector.run(sf, roots, false, true, true);
-        
-        sf.close();
-        
-        SkillFile sfExpected = SkillFile.open("src/test/resources/emptyTypePool/reference/result.sf");
-        SkillFile sfActual = SkillFile.open(path);
-        compareSkillFiles(sfExpected, sfActual);
-	}
+class EmptyTypePoolTest extends CommonGcTest{
+	private final static String folder = "src/test/resources/emptyTypePool/";
 	
-	@Test
-	void testReferenceKeepCollection() throws Exception {
-		Path path = tmpFile("reference.keep");
-
-        SkillFile sf = SkillFile.open("src/test/resources/emptyTypePool/reference/reference.sf");
-        sf.changePath(path);
-        
-        Set<CollectionRoot> roots = new HashSet<>();
-        roots.add(new CollectionRoot("t"));
-        
-        GarbageCollector.run(sf, roots, true, true, true);
-        
-        sf.close();
-        
-        SkillFile sfExpected = SkillFile.open("src/test/resources/emptyTypePool/reference/result.sf");
-        SkillFile sfActual = SkillFile.open(path);
-        compareSkillFiles(sfExpected, sfActual);
+	protected EmptyTypePoolTest() {
+		gcTestDefinitions.add(new GcTestDefinition("test_reference_RootT", folder + "reference/reference.sf",
+				folder + "reference/result.sf", "t"));
+		gcTestDefinitions.add(new GcTestDefinition("test_reference_RootT_keepColl", folder + "reference/reference.sf",
+				folder + "reference/result.sf", "t", true));
+		gcTestDefinitions.add(new GcTestDefinition("test_referenceVar_RootT", folder + "reference/reference_variation.sf",
+				folder + "reference/result_variation.sf", "u"));
+		
+		gcTestDefinitions.add(new GcTestDefinition("test_array_RootT", folder + "array/array.sf",
+				folder + "array/result.sf", "t"));
+		gcTestDefinitions.add(new GcTestDefinition("test_array_RootT_keepCool", folder + "array/array.sf",
+				folder + "array/array.sf", "t", true));
+		
+		gcTestDefinitions.add(new GcTestDefinition("test_map_RootT", folder + "map/map.sf",
+				folder + "map/result.sf", "t"));
+		gcTestDefinitions.add(new GcTestDefinition("test_map_RootT_keepCool", folder + "map/map.sf",
+				folder + "map/map.sf", "t", true));
+		
 	}
-	
-	@Test
-	void testArray() throws Exception {
-		Path path = tmpFile("array");
-
-        SkillFile sf = SkillFile.open("src/test/resources/emptyTypePool/array/array.sf");
-        sf.changePath(path);
-        
-        Set<CollectionRoot> roots = new HashSet<>();
-        roots.add(new CollectionRoot("t"));
-        
-        GarbageCollector.run(sf, roots, false, true, true);
-        
-        sf.close();
-        
-        SkillFile sfExpected = SkillFile.open("src/test/resources/emptyTypePool/array/result.sf");
-        SkillFile sfActual = SkillFile.open(path);
-        compareSkillFiles(sfExpected, sfActual);
-	}
-	
-	@Test
-	void testMap() throws Exception {
-		Path path = tmpFile("map");
-
-        SkillFile sf = SkillFile.open("src/test/resources/emptyTypePool/map/map.sf");
-        sf.changePath(path);
-        
-        Set<CollectionRoot> roots = new HashSet<>();
-        roots.add(new CollectionRoot("t"));
-        
-        GarbageCollector.run(sf, roots, false, true, true);
-        
-        sf.close();
-        
-        SkillFile sfExpected = SkillFile.open("src/test/resources/emptyTypePool/map/result.sf");
-        SkillFile sfActual = SkillFile.open(path);
-        compareSkillFiles(sfExpected, sfActual);
-	}
-	
-	@Test
-	void testArrayKeepCollection() throws Exception {
-		Path path = tmpFile("array.keep");
-
-        SkillFile sf = SkillFile.open("src/test/resources/emptyTypePool/array/array.sf");
-        sf.changePath(path);
-        
-        Set<CollectionRoot> roots = new HashSet<>();
-        roots.add(new CollectionRoot("t"));
-        
-        GarbageCollector.run(sf, roots, true, true, true);
-        
-        sf.close();
-        
-        SkillFile sfExpected = SkillFile.open("src/test/resources/emptyTypePool/array/array.sf");
-        SkillFile sfActual = SkillFile.open(path);
-        compareSkillFiles(sfExpected, sfActual);
-	}
-	
-	@Test
-	void testMapKeepCollection() throws Exception {
-		Path path = tmpFile("map.keep");
-
-        SkillFile sf = SkillFile.open("src/test/resources/emptyTypePool/map/map.sf");
-        sf.changePath(path);
-        
-        Set<CollectionRoot> roots = new HashSet<>();
-        roots.add(new CollectionRoot("t"));
-        
-        GarbageCollector.run(sf, roots, true, true, true);
-        
-        sf.close();
-        
-        SkillFile sfExpected = SkillFile.open("src/test/resources/emptyTypePool/map/map.sf");
-        SkillFile sfActual = SkillFile.open(path);
-        compareSkillFiles(sfExpected, sfActual);
-	}
-	
-	@Test
-	void testReferenceVariation() throws Exception {
-		Path path = tmpFile("reference.variation");
-
-        SkillFile sf = SkillFile.open("src/test/resources/emptyTypePool/reference/reference_variation.sf");
-        sf.changePath(path);
-        
-        Set<CollectionRoot> roots = new HashSet<>();
-        roots.add(new CollectionRoot("u"));
-        
-        GarbageCollector.run(sf, roots, false, true, true);
-        
-        sf.close();
-        
-        SkillFile sfExpected = SkillFile.open("src/test/resources/emptyTypePool/reference/result_variation.sf");
-        SkillFile sfActual = SkillFile.open(path);
-        compareSkillFiles(sfExpected, sfActual);
-	}
-
 }
