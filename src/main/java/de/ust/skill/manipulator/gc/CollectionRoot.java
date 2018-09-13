@@ -15,10 +15,10 @@ package de.ust.skill.manipulator.gc;
  *
  */
 public class CollectionRoot {
-	static final int ALL_IDS = 0;
+	public static final int ALL_IDS = 0;
 
-	String type;
-	int id;
+	private String type;
+	private int id;
 
 	public CollectionRoot(String type) {
 		this.type = type;
@@ -31,6 +31,14 @@ public class CollectionRoot {
 			this.id = ALL_IDS;
 		else
 			this.id = id;
+	}
+
+	public String getType() {
+		return type;
+	}
+
+	public int getId() {
+		return id;
 	}
 }
 

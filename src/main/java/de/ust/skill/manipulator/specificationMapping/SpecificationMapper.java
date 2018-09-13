@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Semaphore;
 
+import de.ust.skill.common.java.api.SkillException;
 import de.ust.skill.common.java.internal.BasePool;
 import de.ust.skill.common.java.internal.FieldDeclaration;
 import de.ust.skill.common.java.internal.FieldIterator;
@@ -51,7 +52,7 @@ public class SpecificationMapper {
 	
 	private SpecificationMapper() {}
 	
-	public static SkillFile map(TypeContext tc, SkillFile sf, Path targetPath, String mappingfile) throws ParseException, IOException, InterruptedException {
+	public static SkillFile map(TypeContext tc, SkillFile sf, Path targetPath, String mappingfile) throws ParseException, IOException, InterruptedException, SkillException {
 		SpecificationMapper mapper = new SpecificationMapper();
 		MappingLog.clearLog();
 		
@@ -79,7 +80,7 @@ public class SpecificationMapper {
 		return mapper.newState;
 	}
 	
-	public static SkillFile map(TypeContext tc, SkillFile sf, Path targetPath) throws IOException,InterruptedException, ParseException {
+	public static SkillFile map(TypeContext tc, SkillFile sf, Path targetPath) throws IOException,InterruptedException, ParseException, SkillException {
 		return map(tc, sf, targetPath, null);
 	}
 		

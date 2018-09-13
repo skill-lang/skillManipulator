@@ -71,16 +71,16 @@ public class GarbageCollector {
 		// loop over roots and process them
 		if(roots != null) {
 			for(CollectionRoot root : roots) {
-				StoragePool<?, ?> s = gc.state.pool(root.type);
+				StoragePool<?, ?> s = gc.state.pool(root.getType());
 				if(s != null) {
-					if(root.id == CollectionRoot.ALL_IDS) {
+					if(root.getId() == CollectionRoot.ALL_IDS) {
 						for(SkillObject o : s) {	
 							gc.workingQueue.push(o);
 							gc.processSkillObject();
 							rootObjects++;
 						}
 					} else {
-						SkillObject o = s.getByID(root.id);
+						SkillObject o = s.getByID(root.getId());
 						if(o != null) {
 							gc.workingQueue.push(o);
 							gc.processSkillObject();

@@ -27,23 +27,20 @@ import de.ust.skill.manipulator.utils.TypeUtils;
 import de.ust.skill.parser.Parser;
 
 public class CLI {
-	private static CommandLine line; 
-	private static Options options = new Options();
-	private static SkillFile sf;
-	private static Path outpath = null;
+	private CommandLine line; 
+	private SkillFile sf;
+	private Path outpath = null;
+	private static final Options options = createOptions();
 	
-	public static void main(String[] args) {
-		CommandLineParser parser = new DefaultParser();
-
-		// create command line options
-		createOptions();
-		
+	private static final CommandLineParser parser = new DefaultParser();
+	
+	private CLI(String[] args) {
 		try {
 		    // parse the command line arguments
 		    line = parser.parse(options, args);
 		}
-		catch( ParseException exp ) {
-		    System.out.println("Wrong usage of command line interface.");
+		catch(ParseException exp) {
+		    System.out.println("Wrong usage of command line interface: " + exp.getMessage());
 		    printHelp();
 		    return;
 		}    
@@ -58,24 +55,27 @@ public class CLI {
 			printHelp();
 		} else if(line.hasOption("gc")) {
 			executeGC();
-		} else if(line.hasOption("map")) {
+		} else if(line.hasOption("specmap")) {
 			executeSpecificationMapping();
 		} else if(line.hasOption("rm")) {
 			executeRemoval();
 		}
-
+	}
+	
+	public static void main(String[] args) {
+		new CLI(args);
 	}
 
-	private static void executeRemoval() {
+	private void executeRemoval() {
 		if(line.hasOption("t")) {
 			TypeUtils.deleteType(sf, line.getOptionValue("t"));
 		} else if(line.hasOption("f")) {
 			String field = line.getOptionValue("f");
-			if(!field.contains(".")) {
+			String[] splitted = field.split("\\.");
+			if(splitted.length != 2) {
 				System.out.println("Please specify field as type.field");
 				return;
 			}
-			String[] splitted = field.split(".");
 			String fieldname = splitted[1];
 			String ofType = splitted[0];
 			FieldUtils.removeField(sf, fieldname, ofType);
@@ -84,9 +84,16 @@ public class CLI {
 			return;
 		}
 		
+		if(outpath != null)
+			try {
+				sf.changePath(outpath);
+			} catch (IOException e) {
+				System.out.println("Error while creating outfile.");
+			}
+    	if(!line.hasOption("d")) sf.close();
 	}
 
-	private static void executeSpecificationMapping() {
+	private void executeSpecificationMapping() {
 		if(!line.hasOption("spec")) {
 			System.out.println("Please provide a specification file with option -spec.");
 			return;
@@ -103,7 +110,12 @@ public class CLI {
 		if(outpath == null) outpath = sf.currentPath();
 		SkillFile newSf;
 		try {
-			newSf = SpecificationMapper.map(tc, sf, outpath);
+			if(line.hasOption("map")) {
+				String mappingFile = line.getOptionValue("map");
+				newSf = SpecificationMapper.map(tc, sf, outpath, mappingFile);
+			} else {
+				newSf = SpecificationMapper.map(tc, sf, outpath);
+			}
 		} catch (IOException e) {
 			System.out.println("Error while creating new Skillfile.");
 			return;
@@ -114,12 +126,17 @@ public class CLI {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return;
+		} catch (SkillException e) {
+			System.out.println("Restriction violated: " + e.getMessage());
+			return;
 		}
 		
 		if(!line.hasOption("d")) newSf.close();
 	}
 
-	private static void createOptions() {
+	private static Options createOptions() {
+		Options options = new Options();
+		
 		/**
 		 * Option group for mode
 		 */
@@ -127,7 +144,7 @@ public class CLI {
 		command.setRequired(true);
 		command.addOption(new Option("h", "print this help page"));
 		command.addOption(new Option("gc", "execute a garbage collection run on given binary file with given roots"));
-		command.addOption(new Option("map", "map the SKilL-Graph in the given binary file on the given specification"));
+		command.addOption(new Option("specmap", "map the SKilL-Graph in the given binary file on the given specification"));
 		command.addOption(new Option("rm", "remove a whole type or al field from a type"));
 		
 		options.addOptionGroup(command);
@@ -175,6 +192,11 @@ public class CLI {
 				.argName("specification.skill")
 				.desc("The specification file with the typesystem to map the binary file on.")
 				.build());
+		options.addOption(Option.builder("map")
+				.hasArg()
+				.argName("mapping.map")
+				.desc("The optional mapping file.")
+				.build());
 		
 		/**
 		 * Field/Type remove options
@@ -191,16 +213,18 @@ public class CLI {
 				.desc("Remove specified field from the typesystem.")
 				.build());
 		options.addOptionGroup(rmType);
+		
+		return options;
 	}
 
 	private static void printHelp() {
 		HelpFormatter formatter = new HelpFormatter();
     	// TODO help page
     	formatter.setWidth(180);
-    	formatter.printHelp("program", options);
+//    	formatter.printHelp("program", options);
 	}
 	
-	private static boolean parseSkillfile() {
+	private boolean parseSkillfile() {
 		String skillfile = line.getOptionValue("i");
 		try {
 			sf = SkillFile.open(skillfile);
@@ -228,27 +252,26 @@ public class CLI {
 		return retval;
 	}
 
-	private static void executeGC() {
+	private void executeGC() {
 		boolean keepCollectionFields = false;
     	boolean printStatistics = false;
     	boolean printProgress = false;
-    	Set<CollectionRoot> collRoots;
+    	Set<CollectionRoot> collRoots = null;
     	
     	if(!line.hasOption("r")) {
-    		System.out.println("Please provide roots with option -r");
-    		return;
+    		System.out.println("No roots specified. Result will be empty file.");
+    	} else {
+    		String[] roots = line.getOptionValues("r");
+        	collRoots = parseRoots(roots);
     	}
     	
     	if(line.hasOption("kC")) keepCollectionFields = true;
     	if(line.hasOption("s")) printStatistics = true;
     	if(line.hasOption("p")) printProgress = true;
-    	
-    	String[] roots = line.getOptionValues("r");
-    	collRoots = parseRoots(roots);
         
     	GarbageCollector.run(sf, collRoots, keepCollectionFields, printStatistics, printProgress);
     	
-    	if(outpath != null && !line.hasOption("d"))
+    	if(outpath != null)
 			try {
 				sf.changePath(outpath);
 			} catch (IOException e) {
