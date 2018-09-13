@@ -1,4 +1,4 @@
-package gcTest;
+package common;
 
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
@@ -9,8 +9,6 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
-import common.CommonTest;
-
 public abstract class CommonGcTest extends CommonTest {
 	protected class GcTestDefinition {
 		private String testname;
@@ -19,7 +17,7 @@ public abstract class CommonGcTest extends CommonTest {
 		private String roots;
 		private boolean keepCollections;
 		
-		GcTestDefinition(String testname, String file, String expectedFile, String roots) {
+		public GcTestDefinition(String testname, String file, String expectedFile, String roots) {
 			this.testname = testname;
 			this.file = file;
 			this.expectedFile = expectedFile;
@@ -27,7 +25,7 @@ public abstract class CommonGcTest extends CommonTest {
 			this.keepCollections = false;
 		}
 		
-		GcTestDefinition(String testname, String file, String expectedFile, String roots, boolean kC) {
+		public GcTestDefinition(String testname, String file, String expectedFile, String roots, boolean kC) {
 			this.testname = testname;
 			this.file = file;
 			this.expectedFile = expectedFile;

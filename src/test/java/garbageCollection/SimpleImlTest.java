@@ -1,4 +1,6 @@
-package gcTest;
+package garbageCollection;
+
+import common.CommonGcTest;
 
 class SimpleImlTest extends CommonGcTest{
 	private final static String folder = "src/test/resources/simpleIml/";

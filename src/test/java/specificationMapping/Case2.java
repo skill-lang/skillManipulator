@@ -1,4 +1,6 @@
-package specificationMappingTest;
+package specificationMapping;
+
+import common.CommonSpecificationMappingTest;
 
 class Case2 extends CommonSpecificationMappingTest {
 	

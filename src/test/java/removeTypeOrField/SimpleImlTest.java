@@ -1,5 +1,7 @@
 package removeTypeOrField;
 
+import common.CommonRemoveTest;
+
 class SimpleImlTest extends CommonRemoveTest{
 	private static final String folder = "src/test/resources/simpleIml/";
 	private static final String startfile = folder + "simple.iml.sf";

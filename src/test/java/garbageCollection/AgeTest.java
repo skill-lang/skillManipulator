@@ -1,5 +1,6 @@
-package gcTest;
+package garbageCollection;
 
+import common.CommonGcTest;
 
 class AgeTest extends CommonGcTest{
 	private final static String folder = "src/test/resources/age/";

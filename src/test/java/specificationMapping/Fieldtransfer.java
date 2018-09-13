@@ -1,4 +1,6 @@
-package specificationMappingTest;
+package specificationMapping;
+
+import common.CommonSpecificationMappingTest;
 
 class Fieldtransfer extends CommonSpecificationMappingTest {
 

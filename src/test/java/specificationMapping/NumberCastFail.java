@@ -1,4 +1,6 @@
-package specificationMappingTest;
+package specificationMapping;
+
+import common.CommonSpecificationMappingTest;
 
 class NumberCastFail extends CommonSpecificationMappingTest {
 

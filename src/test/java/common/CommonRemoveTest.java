@@ -1,4 +1,4 @@
-package removeTypeOrField;
+package common;
 
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
@@ -9,8 +9,6 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
-import common.CommonTest;
-
 public abstract class CommonRemoveTest extends CommonTest {
 	protected abstract class RemoveTestDefinition {
 		private String testname;
@@ -18,7 +16,7 @@ public abstract class CommonRemoveTest extends CommonTest {
 		private String expectedFile;
 		private String typename;
 		
-		protected RemoveTestDefinition(String testname, String file, String expectedFile, String typename) {
+		RemoveTestDefinition(String testname, String file, String expectedFile, String typename) {
 			this.testname = testname;
 			this.file = file;
 			this.expectedFile = expectedFile;
@@ -27,7 +25,7 @@ public abstract class CommonRemoveTest extends CommonTest {
 	}
 	
 	protected class RemoveTypeTestDefinition extends RemoveTestDefinition {
-		protected RemoveTypeTestDefinition(String testname, String file, String expectedFile, String typename) {
+		public RemoveTypeTestDefinition(String testname, String file, String expectedFile, String typename) {
 			super(testname, file, expectedFile, typename);
 		}
 		
@@ -36,7 +34,7 @@ public abstract class CommonRemoveTest extends CommonTest {
 	protected class RemoveFieldTestDefinition extends RemoveTestDefinition {
 		private String fieldname;
 		
-		protected RemoveFieldTestDefinition(String testname, String file, String expectedFile,
+		public RemoveFieldTestDefinition(String testname, String file, String expectedFile,
 				String typename, String fieldname) {
 			super(testname, file, expectedFile, typename);
 			this.fieldname = fieldname;

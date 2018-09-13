@@ -1,4 +1,4 @@
-package gcTest;
+package garbageCollection;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
+import common.CommonGcTest;
 import common.SkillfileComparator;
 import de.ust.skill.common.java.api.Access;
 import de.ust.skill.common.java.internal.SkillObject;

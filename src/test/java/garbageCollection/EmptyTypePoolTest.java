@@ -1,4 +1,6 @@
-package gcTest;
+package garbageCollection;
+
+import common.CommonGcTest;
 
 class EmptyTypePoolTest extends CommonGcTest{
 	private final static String folder = "src/test/resources/emptyTypePool/";

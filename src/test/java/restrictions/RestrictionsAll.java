@@ -4,10 +4,10 @@ import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 
+import common.CommonSpecificationMappingTest;
 import common.SkillfileComparator;
 import de.ust.skill.manipulator.internal.SkillFile;
 import de.ust.skill.manipulator.internal.SkillState;
-import specificationMappingTest.CommonSpecificationMappingTest;
 
 class RestrictionsAll extends CommonSpecificationMappingTest {
 

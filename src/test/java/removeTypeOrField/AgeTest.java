@@ -1,5 +1,7 @@
 package removeTypeOrField;
 
+import common.CommonRemoveTest;
+
 class AgeTest extends CommonRemoveTest{
 	private static final String folder = "src/test/resources/age/";
 	private static final String startfile = folder + "age-example.sf";
