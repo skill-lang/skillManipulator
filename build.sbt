@@ -9,7 +9,9 @@ javacOptions ++= Seq("-encoding", "UTF-8")
 compileOrder := CompileOrder.Mixed
 
 libraryDependencies ++= Seq(
-    "org.junit.jupiter" % "junit-jupiter-engine" % "5.1.0" % "test"
+    "org.junit.platform" % "junit-platform-runner" % "1.3.1" % "test",
+    "org.junit.jupiter" % "junit-jupiter-engine" % "5.3.1" % "test",
+    "org.junit.vintage" % "junit-vintage-engine" % "5.3.1" % "test"
 )
 
 javaOptions ++= Seq("-Xmx4G","-Xms4G","-XX:MaxHeapFreeRatio=100")

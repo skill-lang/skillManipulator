@@ -105,5 +105,40 @@ class TestFramework extends CommonTest {
 		SkillfileComparator.compareSkillFiles(sfExpected, sfActual);
 		
 	}
+	
+	@Test
+	void testMultipleComparator() throws Exception {
+		Path path = tmpFile("multipleComparator");
+		
+		SkillFile sf = SkillFile.open("src/test/resources/simpleIml/simple.iml.sf");
+		sf.changePath(path);
+		
+		StoragePool<?, ?> sloc = ((SkillState)sf).pool("sloc");
+		FieldDeclaration<?,?> linearline = null;
+		for(FieldDeclaration<?, ?> f : sloc.dataFields) {
+			if(f.name().equals("linearline")) linearline = f;
+		}
+		SkillObjectComparator comp = new SimpleFieldComparator<>(linearline);
+		
+		StoragePool<?, ?> storable = ((SkillState)sf).pool("storable");
+		FieldDeclaration<?,?> nodeid = null;
+		for(FieldDeclaration<?, ?> f : storable.dataFields) {
+			if(f.name().equals("nodeid")) nodeid = f;
+		}
+		SkillObjectComparator comp2 = new SimpleFieldComparator<>(nodeid);
+		
+		Map<String,SkillObjectComparator> compMap = new HashMap<>();
+		compMap.put("sloc", comp);
+		compMap.put("storable", comp2);
+		
+		SkillObjectSorter.sort(sf, compMap);
+		
+		sf.close();
+		
+		SkillFile sfExpected = SkillFile.open("src/test/resources/orderRelation/multipleComparators.sf");
+		SkillFile sfActual = SkillFile.open(path);
+		SkillfileComparator.compareSkillFiles(sfExpected, sfActual);
+		
+	}
 
 }

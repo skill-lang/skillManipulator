@@ -30,9 +30,9 @@ public class CLI {
 	private CommandLine line; 
 	private SkillFile sf;
 	private Path outpath = null;
-	private static final Options options = createOptions();
+	private final Options options = createOptions();
 	
-	private static final CommandLineParser parser = new DefaultParser();
+	private final CommandLineParser parser = new DefaultParser();
 	
 	private CLI(String[] args) {
 		try {
