@@ -60,6 +60,7 @@ public final class TypeUtils {
 
 		// add all subtypes to remove them too and delete their objects
 		Set<StoragePool<?, ?>> deleteTypes = new HashSet<>();
+		@SuppressWarnings("unchecked")
 		TypeHierarchyIterator<?, ?> it = (TypeHierarchyIterator<T, B>) new TypeHierarchyIterator<>(type);
 		StaticDataIterator<?> sit;
 		while(it.hasNext()) {
@@ -91,6 +92,7 @@ public final class TypeUtils {
 	 */
 	public static <T extends B,B extends SkillObject> boolean deleteType(SkillFile sf, String type) {
 		SkillState state = (SkillState)sf;
+		@SuppressWarnings("unchecked")
 		StoragePool<? extends T, B> pool = (StoragePool<? extends T, B>) state.pool(type);
 
 		if(pool == null) {
