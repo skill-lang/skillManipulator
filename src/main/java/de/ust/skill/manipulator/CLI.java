@@ -40,7 +40,6 @@ public class CLI {
 		    line = parser.parse(options, args);
 		}
 		catch(ParseException exp) {
-		    System.out.println("Wrong usage of command line interface: " + exp.getMessage());
 		    printHelp();
 		    return;
 		}    
@@ -143,9 +142,9 @@ public class CLI {
 		OptionGroup command = new OptionGroup();
 		command.setRequired(true);
 		command.addOption(new Option("h", "print this help page"));
-		command.addOption(new Option("gc", "execute a garbage collection run on given binary file with given roots"));
-		command.addOption(new Option("specmap", "map the SKilL-Graph in the given binary file on the given specification"));
-		command.addOption(new Option("rm", "remove a whole type or al field from a type"));
+		command.addOption(new Option("gc", "gc mode"));
+		command.addOption(new Option("specmap", "specification mapping mode"));
+		command.addOption(new Option("rm", "remove type or field mode"));
 		
 		options.addOptionGroup(command);
 
@@ -217,11 +216,22 @@ public class CLI {
 		return options;
 	}
 
-	private static void printHelp() {
+	private void printHelp() {
 		HelpFormatter formatter = new HelpFormatter();
-    	// TODO help page
-    	formatter.setWidth(180);
-//    	formatter.printHelp("program", options);
+		formatter.setOptionComparator(null);
+
+    	String header = "This tool comes with three modes:\n" +
+    			"  gc: Garbage Collection\n" + 
+    			"  specmap: Specification mapping\n" + 
+    			"  rm: Remove field or type\n" + 
+    			"Every mode MUST have an input skillfile and CAN have an outfile.\n" + 
+    			"Every mode has its own options.\n\n" + 
+    			"If you get an OutOfMemory-Error, try with more heap space.\n\n" + 
+    			"Options: ";
+    	String footer = "";
+    	formatter.setWidth(100);
+    	formatter.printHelp("java -jar skillManipulator.jar (-gc/-specmap/-rm) -i skillfile" + ""
+    			+ " [-o outfile] [-d] (mode dependent options)", header, options, footer);
 	}
 	
 	private boolean parseSkillfile() {
