@@ -103,30 +103,32 @@ public abstract class CommonPerformanceTest extends CommonTest{
 	
 	@AfterAll
 	private static void performanceAnalysis() throws Exception {
-		String filename = new SimpleDateFormat("'output/performanceTest-'yyyy-MM-dd-HH-mm-ss'.csv'").format(new Date());
-		PrintWriter pw = new PrintWriter(new File(filename));
-        StringBuilder sb = new StringBuilder();
-        sb.append("filename,object count,time(ms),gc time(ms)\n");
-	
-		for(TimeInformation ti : timeInfos) {
-			System.out.println(ti.filename);
-			System.out.println("  Object count: " + ti.totalObjects);
-			
-			double average = 0;
-			for (int i = 0; i < ti.time.length; i++) {
-				sb.append(ti.filename).append(",").append(ti.totalObjects).append(",").append(ti.time[i])
-					.append(",").append(ti.gcTime[i]).append(",").append("\n");
-				average += ti.time[i];
+		if(!timeInfos.isEmpty()) {
+			String filename = new SimpleDateFormat("'output/performanceTest-'yyyy-MM-dd-HH-mm-ss'.csv'").format(new Date());
+			PrintWriter pw = new PrintWriter(new File(filename));
+	        StringBuilder sb = new StringBuilder();
+	        sb.append("filename,object count,time(ms),gc time(ms)\n");
+		
+			for(TimeInformation ti : timeInfos) {
+				System.out.println(ti.filename);
+				System.out.println("  Object count: " + ti.totalObjects);
+				
+				double average = 0;
+				for (int i = 0; i < ti.time.length; i++) {
+					sb.append(ti.filename).append(",").append(ti.totalObjects).append(",").append(ti.time[i])
+						.append(",").append(ti.gcTime[i]).append(",").append("\n");
+					average += ti.time[i];
+				}
+				
+				average = average / ti.time.length;
+				System.out.println("  Average: " + average + " ms");
+				double timePerObject = average / ti.totalObjects * 1000;
+				System.out.println("  Time per object: " + timePerObject + " ns");
 			}
-			
-			average = average / ti.time.length;
-			System.out.println("  Average: " + average + " ms");
-			double timePerObject = average / ti.totalObjects * 1000;
-			System.out.println("  Time per object: " + timePerObject + " ns");
+	
+			pw.write(sb.toString());
+			pw.close();
 		}
-
-		pw.write(sb.toString());
-		pw.close();
 	}
 
 
