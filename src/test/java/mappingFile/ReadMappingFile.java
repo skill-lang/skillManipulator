@@ -7,9 +7,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import common.CommonSpecificationMappingTest;
-import de.ust.skill.manipulator.specificationMapping.MappingfileParser.MappingFileParser;
-import de.ust.skill.manipulator.specificationMapping.MappingfileParser.ParseException;
-import de.ust.skill.manipulator.specificationMapping.MappingfileParser.TypeMapping;
+import de.ust.skill.manipulator.specificationMapping.mappingfileParser.MappingFileParser;
+import de.ust.skill.manipulator.specificationMapping.mappingfileParser.ParseException;
+import de.ust.skill.manipulator.specificationMapping.mappingfileParser.TypeMapping;
 
 class ReadMappingFile extends CommonSpecificationMappingTest {
 

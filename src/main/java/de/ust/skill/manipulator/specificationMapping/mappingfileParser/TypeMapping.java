@@ -1,4 +1,4 @@
-package de.ust.skill.manipulator.specificationMapping.MappingfileParser;
+package de.ust.skill.manipulator.specificationMapping.mappingfileParser;
 
 import java.util.HashMap;
 import java.util.Map;

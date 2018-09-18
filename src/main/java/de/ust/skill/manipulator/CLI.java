@@ -122,7 +122,7 @@ public class CLI {
 		} catch (InterruptedException e) {
 			System.out.println("Error while transferring objects.");
 			return;
-		} catch (de.ust.skill.manipulator.specificationMapping.MappingfileParser.ParseException e) {
+		} catch (de.ust.skill.manipulator.specificationMapping.mappingfileParser.ParseException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return;

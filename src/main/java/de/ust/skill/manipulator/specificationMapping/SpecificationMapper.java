@@ -26,9 +26,9 @@ import de.ust.skill.common.java.internal.parts.Block;
 import de.ust.skill.ir.TypeContext;
 import de.ust.skill.manipulator.internal.SkillFile;
 import de.ust.skill.manipulator.internal.SkillState;
-import de.ust.skill.manipulator.specificationMapping.MappingfileParser.MappingFileParser;
-import de.ust.skill.manipulator.specificationMapping.MappingfileParser.ParseException;
-import de.ust.skill.manipulator.specificationMapping.MappingfileParser.TypeMapping;
+import de.ust.skill.manipulator.specificationMapping.mappingfileParser.MappingFileParser;
+import de.ust.skill.manipulator.specificationMapping.mappingfileParser.ParseException;
+import de.ust.skill.manipulator.specificationMapping.mappingfileParser.TypeMapping;
 import de.ust.skill.manipulator.utils.FieldUtils;
 
 public class SpecificationMapper {
