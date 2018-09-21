@@ -4,7 +4,9 @@ import common.CommonSpecificationMappingTest;
 
 class Case1 extends CommonSpecificationMappingTest {
 
+	private static final String FOLDER = "src/test/resources/specificationMapper/case1/";
+
 	protected Case1() {
-		super("src/test/resources/specificationMapper/case1/", "specification.sf");
+		super(FOLDER, FOLDER + "specification.sf");
 	}
 }

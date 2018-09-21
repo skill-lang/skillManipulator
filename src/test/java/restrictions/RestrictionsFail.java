@@ -10,8 +10,10 @@ import common.CommonSpecificationMappingTest;
 
 class RestrictionsFail extends CommonSpecificationMappingTest {
 
+	private static final String FOLDER = "src/test/resources/restrictionsFail/";
+
 	protected RestrictionsFail() {
-		super("src/test/resources/restrictionsFail/", "../restrictions/restrictionsAll.sf");
+		super(FOLDER, FOLDER + "../restrictions/restrictionsAll.sf");
 	}
 	
 	protected void executeMapping(Path srcPath) throws Exception {

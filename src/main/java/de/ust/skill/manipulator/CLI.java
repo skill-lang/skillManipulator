@@ -108,12 +108,13 @@ public class CLI {
 		
 		if(outpath == null) outpath = sf.currentPath();
 		SkillFile newSf;
+		SpecificationMapper mapper = new SpecificationMapper();
 		try {
 			if(line.hasOption("map")) {
 				String mappingFile = line.getOptionValue("map");
-				newSf = SpecificationMapper.map(tc, sf, outpath, mappingFile);
+				newSf = mapper.map(tc, sf, outpath, mappingFile);
 			} else {
-				newSf = SpecificationMapper.map(tc, sf, outpath);
+				newSf = mapper.map(tc, sf, outpath);
 			}
 		} catch (IOException e) {
 			System.out.println("Error while creating new Skillfile.");
@@ -122,15 +123,14 @@ public class CLI {
 			System.out.println("Error while transferring objects.");
 			return;
 		} catch (de.ust.skill.manipulator.specificationMapping.mappingfileParser.ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println("Error while parsing mapping file.");
 			return;
 		} catch (SkillException e) {
 			System.out.println("Restriction violated: " + e.getMessage());
 			return;
 		}
 		
-		if(!line.hasOption("d")) newSf.close();
+		if(!line.hasOption("d") && newSf != null) newSf.close();
 	}
 
 	private static Options createOptions() {

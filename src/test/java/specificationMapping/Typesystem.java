@@ -4,8 +4,10 @@ import common.CommonSpecificationMappingTest;
 
 class Typesystem extends CommonSpecificationMappingTest {
 
+	private static final String FOLDER = "src/test/resources/specificationMapper/typesystem/";
+
 	protected Typesystem() {
-		super("src/test/resources/specificationMapper/typesystem/", "specification.sf");
+		super(FOLDER, FOLDER + "specification.sf");
 	}
 
 }

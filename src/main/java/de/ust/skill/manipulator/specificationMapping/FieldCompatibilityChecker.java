@@ -40,11 +40,13 @@ public class FieldCompatibilityChecker {
 		}
 		
 		if(oldField.type() instanceof FloatType<?> && newField.type() instanceof IntegerType) {
-			MappingLog.genIntFloatWarning(oldField, newField);
+			// TODO
+//			MappingLog.genIntFloatWarning(oldField, newField);
 		}
 
 		if(oldField.type() instanceof IntegerType && newField.type() instanceof FloatType<?>) {
-			MappingLog.genIntFloatWarning(oldField, newField);
+			// TODO
+//			MappingLog.genIntFloatWarning(oldField, newField);
 		}
 		
 		return  true;
@@ -54,17 +56,17 @@ public class FieldCompatibilityChecker {
 		int typeID = newType.typeID;
 		
 		switch(typeID) {
-		case 5: return AnnotationCheck.get();
-		case 6: return BoolCheck.get();
-		case 7: return ByteCheck.get();
-		case 8: return ShortCheck.get();
-		case 9: return IntCheck.get();
+		case 5: return annotationCheck;
+		case 6: return boolCheck;
+		case 7: return byteCheck;
+		case 8: return shortCheck;
+		case 9: return intCheck;
 		case 10:
 		case 11:
-			return LongCheck.get();
-		case 12: return FloatCheck.get();
-		case 13: return DoubleCheck.get();
-		case 14: return StringCheck.get();
+			return longCheck;
+		case 12: return floatCheck;
+		case 13: return doubleCheck;
+		case 14: return stringCheck;
 		case 15: return new ConstantLengthArrayCheck(newType);
 		case 17:
 		case 18:
@@ -77,18 +79,22 @@ public class FieldCompatibilityChecker {
 		}
 	}
 	
-	private static abstract class Check {	
+	private final AnnotationCheck annotationCheck = new AnnotationCheck();
+	private final BoolCheck boolCheck = new BoolCheck();
+	private final ByteCheck byteCheck = new ByteCheck();
+	private final ShortCheck shortCheck = new ShortCheck();
+	private final IntCheck intCheck = new IntCheck();
+	private final LongCheck longCheck = new LongCheck();
+	private final FloatCheck floatCheck = new FloatCheck();
+	private final DoubleCheck doubleCheck = new DoubleCheck();
+	private final StringCheck stringCheck = new StringCheck();
+	
+	private abstract class Check {	
 		abstract TypeRelation staticCheck(FieldType<?> oldType);
 		abstract boolean dynamicCheck(Object o);
 	}
 	
-	private static class AnnotationCheck extends Check {
-		private static final AnnotationCheck check = new AnnotationCheck();
-		
-		static Check get() {
-			return check;
-		}
-		
+	private class AnnotationCheck extends Check {
 		@Override
 		TypeRelation staticCheck(FieldType<?> oldType) {
 			if(oldType.typeID == 5 || oldType.typeID >= 32) return TypeRelation.COMPATIBLE;
@@ -103,13 +109,7 @@ public class FieldCompatibilityChecker {
 
 	}
 	
-	private static class BoolCheck extends Check {
-		private static final BoolCheck check = new BoolCheck();
-		
-		static Check get() {
-			return check;
-		}
-		
+	private class BoolCheck extends Check {
 		@Override
 		TypeRelation staticCheck(FieldType<?> oldType) {
 			if(oldType.typeID == 6) return TypeRelation.COMPATIBLE;
@@ -124,13 +124,7 @@ public class FieldCompatibilityChecker {
 
 	}
 	
-	private static class ByteCheck extends Check {
-		private static final ByteCheck check = new ByteCheck();
-		
-		static Check get() {
-			return check;
-		}
-		
+	private class ByteCheck extends Check {
 		@Override
 		TypeRelation staticCheck(FieldType<?> oldType) {
 			int id = oldType.typeID;
@@ -155,13 +149,7 @@ public class FieldCompatibilityChecker {
 
 	}
 	
-	private static class ShortCheck extends Check {
-		private static final ShortCheck check = new ShortCheck();
-		
-		static Check get() {
-			return check;
-		}
-		
+	private class ShortCheck extends Check {
 		@Override
 		TypeRelation staticCheck(FieldType<?> oldType) {
 			int id = oldType.typeID;
@@ -186,13 +174,7 @@ public class FieldCompatibilityChecker {
 
 	}
 	
-	private static class IntCheck extends Check {
-		private static final IntCheck check = new IntCheck();
-		
-		static Check get() {
-			return check;
-		}
-		
+	private class IntCheck extends Check {
 		@Override
 		TypeRelation staticCheck(FieldType<?> oldType) {
 			int id = oldType.typeID;
@@ -216,13 +198,7 @@ public class FieldCompatibilityChecker {
 
 	}
 	
-	private static class LongCheck extends Check {
-		private static final LongCheck check = new LongCheck();
-		
-		static Check get() {
-			return check;
-		}
-		
+	private class LongCheck extends Check {
 		@Override
 		TypeRelation staticCheck(FieldType<?> oldType) {
 			int id = oldType.typeID;
@@ -241,13 +217,7 @@ public class FieldCompatibilityChecker {
 
 	}
 	
-	private static class FloatCheck extends Check {
-		private static final FloatCheck check = new FloatCheck();
-		
-		static Check get() {
-			return check;
-		}
-		
+	private class FloatCheck extends Check {
 		@Override
 		TypeRelation staticCheck(FieldType<?> oldType) {
 			int id = oldType.typeID;
@@ -263,13 +233,7 @@ public class FieldCompatibilityChecker {
 
 	}
 	
-	private static class DoubleCheck extends Check {
-		private static final DoubleCheck check = new DoubleCheck();
-		
-		static Check get() {
-			return check;
-		}
-		
+	private class DoubleCheck extends Check {
 		@Override
 		TypeRelation staticCheck(FieldType<?> oldType) {
 			int id = oldType.typeID;
@@ -285,13 +249,7 @@ public class FieldCompatibilityChecker {
 
 	}
 	
-	private static class StringCheck extends Check {
-		private static final StringCheck check = new StringCheck();
-		
-		static Check get() {
-			return check;
-		}
-		
+	private class StringCheck extends Check {
 		@Override
 		TypeRelation staticCheck(FieldType<?> oldType) {
 			if(oldType.typeID == 14) return TypeRelation.COMPATIBLE;

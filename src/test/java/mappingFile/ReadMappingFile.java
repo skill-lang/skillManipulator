@@ -13,8 +13,10 @@ import de.ust.skill.manipulator.specificationMapping.mappingfileParser.TypeMappi
 
 class ReadMappingFile extends CommonSpecificationMappingTest {
 
+	private static final String FOLDER = "src/test/resources/specificationMapper/mappingFiles/";
+
 	protected ReadMappingFile() {
-		super("src/test/resources/specificationMapper/mappingFiles/", "../typesystem/specification.sf");
+		super(FOLDER, FOLDER + "../typesystem/specification.sf");
 	}
 
 	@Test

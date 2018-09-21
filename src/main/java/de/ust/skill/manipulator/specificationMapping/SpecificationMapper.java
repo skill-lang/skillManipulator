@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.Semaphore;
 
@@ -29,6 +30,11 @@ import de.ust.skill.manipulator.internal.SkillState;
 import de.ust.skill.manipulator.specificationMapping.mappingfileParser.MappingFileParser;
 import de.ust.skill.manipulator.specificationMapping.mappingfileParser.ParseException;
 import de.ust.skill.manipulator.specificationMapping.mappingfileParser.TypeMapping;
+import de.ust.skill.manipulator.specificationMapping.messages.FieldIncompatibleInformation;
+import de.ust.skill.manipulator.specificationMapping.messages.FieldNotFoundInformation;
+import de.ust.skill.manipulator.specificationMapping.messages.MappingInformation;
+import de.ust.skill.manipulator.specificationMapping.messages.TypeNotFoundInformation;
+import de.ust.skill.manipulator.specificationMapping.messages.TypeProjectedInformation;
 import de.ust.skill.manipulator.utils.FieldUtils;
 
 public class SpecificationMapper {
@@ -36,6 +42,8 @@ public class SpecificationMapper {
 	// maps pools from old state to new state
 	protected Map<StoragePool<?,?>, StoragePool<?,?>> poolMapping = new HashMap<>();
 	
+	// data structure that stores the mapping information for the types
+	// in detail there are name to name mappings for types and fields
 	private Map<String, TypeMapping> typeMappings = null;
 	
 	protected SkillState newState;
@@ -50,38 +58,69 @@ public class SpecificationMapper {
 	// the relative position of the projected type in the type it is projected to 
 	private int[] projectionOffsetMap;
 	
-	private SpecificationMapper() {}
+	private Set<MappingInformation> mappingLog = new HashSet<>();
+	private boolean returnState = true;
 	
-	public static SkillFile map(TypeContext tc, SkillFile sf, Path targetPath, String mappingfile) throws ParseException, IOException, InterruptedException, SkillException {
-		SpecificationMapper mapper = new SpecificationMapper();
-		MappingLog.clearLog();
-		
-		mapper.oldState = (SkillState)sf;
-		
-		if(mappingfile != null) {
-			mapper.typeMappings = MappingFileParser.parseFile(mappingfile);
-		}
-		
-		mapper.newState = StateCreator.createNewState(tc, targetPath);
-		
-		mapper.mapStates();
-		
-		mapper.transferObjects();
-	
-		mapper.transferFields();
-		
-		mapper.newState.check();
-		
-		// TODO remove print
-		mapper.newState.prettyPrint();
-		
-		System.out.println(MappingLog.printLog());
-		
-		return mapper.newState;
+	public void addToMappingLog(MappingInformation info) {
+		mappingLog.add(info);
 	}
 	
-	public static SkillFile map(TypeContext tc, SkillFile sf, Path targetPath) throws IOException,InterruptedException, ParseException, SkillException {
-		return map(tc, sf, targetPath, null);
+	public Set<MappingInformation> getMappingLog() {
+		return mappingLog;
+	}
+	
+	private String logToString() {
+		StringBuilder sb = new StringBuilder();
+		boolean heading = true;
+		for(MappingInformation info : mappingLog) {
+			if(info instanceof FieldIncompatibleInformation) {
+				if(heading) {
+					sb.append("Field incompatibility errors:\n");
+					heading = false;
+				}
+				sb.append("\t").append(info).append("\n");
+			}
+		}
+		heading = true;
+		for(MappingInformation info : mappingLog) {
+			if(!(info instanceof FieldIncompatibleInformation)) {
+				if(heading) {
+					sb.append("Information about the mapping:\n");
+					heading = false;
+				}
+				sb.append("\t").append(info).append("\n");
+			}
+		}
+		
+		return sb.toString();
+	}
+	
+	public SkillFile map(TypeContext tc, SkillFile sf, Path targetPath, String mappingfile)
+			throws ParseException, IOException, InterruptedException, SkillException {
+		if(mappingfile != null) {
+			typeMappings = MappingFileParser.parseFile(mappingfile);
+		}
+		return map(tc, sf, targetPath);
+	}
+
+	public SkillFile map(TypeContext tc, SkillFile sf, Path targetPath) 
+			throws IOException,InterruptedException, SkillException {
+		oldState = (SkillState)sf;
+		
+		newState = StateCreator.createNewState(tc, targetPath);
+		
+		mapStates();
+		
+		transferObjects();
+	
+		transferFields();
+		
+		newState.check();
+		
+		System.out.println(logToString());
+		
+		if(returnState) return newState;
+		else return null;
 	}
 		
 	private void mapStates() {
@@ -104,9 +143,9 @@ public class SpecificationMapper {
 					// if we can project the old pool, we need the offset map later to refer to the types instances
 					projectionOffsetMap[oldPool.typeID-32] = newPool.staticDataInstances;
 					newPool.staticDataInstances += oldPool.staticDataInstances;
-					MappingLog.genProjectionMessage(oldPool, newPool);
+					addToMappingLog(new TypeProjectedInformation(oldPool, newPool));
 				} else {
-					MappingLog.genTypeNotFoundError(oldPool);
+					addToMappingLog(new TypeNotFoundInformation(oldPool));
 				}
 			} else {		
 				newPool.staticDataInstances += oldPool.staticDataInstances;
@@ -121,17 +160,6 @@ public class SpecificationMapper {
 			oldLbpoMap[oldPool.typeID-32] = lbpo;
 			lbpo += oldPool.staticDataInstances;
 		}
-	}
-
-	private String getTypeName(String name) {
-		if(typeMappings != null) {
-			TypeMapping tm = typeMappings.get(name);
-			if(tm != null) {
-				String newName = tm.getNewTypename();
-				if(newName != null) return newName;
-			}
-		}
-		return name;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -207,26 +235,18 @@ public class SpecificationMapper {
 						if(newField != null) {
 							if(checker.fieldsCompatible(oldField, newField)) transferFieldData(oldField, newField, oldPool);
 							else {
-								MappingLog.genFieldIncompatibleError(oldField, newField);
+								addToMappingLog(new FieldIncompatibleInformation(oldField, newField, oldPool, newPool));
+								returnState = false;
 							}
 						} else {
-							if(newPool.size() > 0) MappingLog.genFieldNotFoundError(oldField);
+							if(newPool.size() > 0) {
+								addToMappingLog(new FieldNotFoundInformation(oldField, oldPool, newPool));
+							}
 						}
 					}
 				}
 			}
 		}
-	}
-
-	private String getFieldName(FieldDeclaration<?, ?> oldField) {
-		if(typeMappings != null) {
-			TypeMapping tm = typeMappings.get(oldField.owner().name());
-			if(tm != null) {
-				String name = tm.getFieldMapping(oldField.name());
-				if(name != null) return name;
-			}
-		}
-		return oldField.name();
 	}
 
 	private FieldDeclaration<?,?> searchField(String fieldname, StoragePool<?, ?> newPool) {
@@ -254,6 +274,28 @@ public class SpecificationMapper {
 	
 			newField.set(newObj,(T)value);
 		}
+	}
+	
+	private String getTypeName(String name) {
+		if(typeMappings != null) {
+			TypeMapping tm = typeMappings.get(name);
+			if(tm != null) {
+				String newName = tm.getNewTypename();
+				if(newName != null) return newName;
+			}
+		}
+		return name;
+	}
+	
+	private String getFieldName(FieldDeclaration<?, ?> oldField) {
+		if(typeMappings != null) {
+			TypeMapping tm = typeMappings.get(oldField.owner().name());
+			if(tm != null) {
+				String name = tm.getFieldMapping(oldField.name());
+				if(name != null) return name;
+			}
+		}
+		return oldField.name();
 	}
 	
 	protected SkillObject calculateNewSkillObject(SkillObject oldObject) {

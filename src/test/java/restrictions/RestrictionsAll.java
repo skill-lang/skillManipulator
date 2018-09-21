@@ -11,8 +11,10 @@ import de.ust.skill.manipulator.internal.SkillState;
 
 class RestrictionsAll extends CommonSpecificationMappingTest {
 
+	private static final String FOLDER = "src/test/resources/restrictions/";
+
 	protected RestrictionsAll() {
-		super("src/test/resources/restrictions/", "restrictionsAll.sf");
+		super(FOLDER, FOLDER + "restrictionsAll.sf");
 	}
 
 	@Test
