@@ -24,17 +24,15 @@ public class FieldCompatibilityChecker {
 		this.specificationMapper = specificationMapper;
 	}
 	
-	public boolean fieldsCompatible(FieldDeclaration<?, ?> oldField, FieldDeclaration<?, ?> newField) {
+	public boolean fieldsCompatible(FieldDeclaration<?, ?> oldField, FieldDeclaration<?, ?> newField, StoragePool<?,?> oldPool) {
 		Check check = dispatchField(newField.type());
-		
-		if(check == null) throw new SkillException("New Type is unknown");
 		
 		TypeRelation tr = check.staticCheck(oldField.type());
 		
 		if(tr == TypeRelation.NOT_COMPATIBLE) return false;
 
 		if(tr == TypeRelation.DYN_CHECK_NEEDED) {
-			for(SkillObject o : oldField.owner()) {
+			for(SkillObject o : oldPool) {
 				if(!check.dynamicCheck(oldField.get(o))) return false;
 			}
 		}

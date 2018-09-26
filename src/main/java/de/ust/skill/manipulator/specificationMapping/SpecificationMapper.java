@@ -233,7 +233,7 @@ public class SpecificationMapper {
 						newField = searchField(searchString, newPool);
 						
 						if(newField != null) {
-							if(checker.fieldsCompatible(oldField, newField)) transferFieldData(oldField, newField, oldPool);
+							if(checker.fieldsCompatible(oldField, newField, oldPool)) transferFieldData(oldField, newField, oldPool);
 							else {
 								addToMappingLog(new FieldIncompatibleInformation(oldField, newField, oldPool, newPool));
 								returnState = false;
@@ -292,7 +292,7 @@ public class SpecificationMapper {
 			TypeMapping tm = typeMappings.get(oldField.owner().name());
 			if(tm != null) {
 				String name = tm.getFieldMapping(oldField.name());
-				if(name != null) return name;
+				return name;
 			}
 		}
 		return oldField.name();
