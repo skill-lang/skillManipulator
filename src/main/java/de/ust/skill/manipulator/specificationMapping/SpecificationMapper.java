@@ -50,7 +50,7 @@ public class SpecificationMapper {
 	private SkillState oldState;
 	
 	// lbpo maps of the old and new types
-	private int[] newLbpoMap;
+	protected int[] newLbpoMap;
 	private int[] oldLbpoMap;
 	
 	// the projection offset is needed if a type of the old state is projected
@@ -111,9 +111,13 @@ public class SpecificationMapper {
 		
 		mapStates();
 		
+		StoragePool.fixed(newState.getTypes());
+		
 		transferObjects();
 	
 		transferFields();
+		
+		StoragePool.unfix(newState.getTypes());
 		
 		newState.check();
 		
@@ -163,9 +167,7 @@ public class SpecificationMapper {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T> void transferObjects() throws InterruptedException {
-		StoragePool.fixed(newState.getTypes());
-		
+	private <T> void transferObjects() throws InterruptedException {	
 		// calculate new lbpos
 		newLbpoMap = new int[newState.getTypes().size()];
 		int lbpo = 0;
@@ -205,8 +207,6 @@ public class SpecificationMapper {
 				}
 			}
 		}
-		
-		StoragePool.unfix(newState.getTypes());
 	}
 	
 	private void transferFields() {

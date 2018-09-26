@@ -386,14 +386,13 @@ public class FieldCompatibilityChecker {
 
 		@Override
 		boolean dynamicCheck(Object o) {
+			// O(1) algorithm based on "Determining Type, Part, Color and Time relationships" 
+			// by LK Schubert, MA Papalaskaris, J Taugher
 			SkillObject newO = specificationMapper.calculateNewSkillObject((SkillObject) o);
 			if(newO != null) {
-				StoragePool<?,?> objectPool = specificationMapper.newState.pool(newO.skillName());
-				while(objectPool != null) {
-					if(objectPool.equals(newType)) return true;
-					objectPool = objectPool.superPool;
-				}
-				return false;
+				int objID = newO.getSkillID();
+				int bpo = specificationMapper.newLbpoMap[newType.typeID - 32];
+				return bpo < objID && objID <= bpo + ((StoragePool<?,?>)newType).size();
 			}
 			return true;
 		}
