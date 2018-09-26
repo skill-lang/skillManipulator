@@ -1,0 +1,14 @@
+
+test -> one
+
+test -> two
+
+type {
+  f -> f2
+}
+
+type {
+  h -> h2
+}
+
+

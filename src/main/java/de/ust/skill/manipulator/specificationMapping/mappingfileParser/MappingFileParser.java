@@ -30,7 +30,9 @@ public class MappingFileParser implements MappingFileParserConstants {
         break label_1;
       }
       t = mapping();
-                    typeMappings.put(t.getTypename(), t);
+      if(typeMappings.put(t.getTypename(), t) != null) {
+        System.out.println("Warning: " + t.getTypename() + " has multiple mappings. Taking last one.");
+      }
     }
   }
 

@@ -42,6 +42,22 @@ class ReadMappingFile extends CommonSpecificationMappingTest {
 	}
 	
 	@Test
+	void testReadDuplicateMapping() throws ParseException, FileNotFoundException {
+		String file = "src/test/resources/specificationMapper/mappingFiles/duplicateMappings.map";
+		
+		Map<String, TypeMapping> typeMappings = MappingFileParser.parseFile(file);
+		
+		TypeMapping t1 = typeMappings.get("test");
+		Assertions.assertEquals("test", t1.getTypename());
+		Assertions.assertEquals("two", t1.getNewTypename());
+		
+		TypeMapping t2 = typeMappings.get("type");
+		Assertions.assertEquals("type", t2.getTypename());
+		Assertions.assertNull(t2.getNewTypename());
+		Assertions.assertEquals("h2", t2.getFieldMapping("h"));
+	}
+	
+	@Test
 	void testReadUnicode() throws ParseException, FileNotFoundException {
 		String file = "src/test/resources/specificationMapper/mappingFiles/unicodeChars.map";
 		

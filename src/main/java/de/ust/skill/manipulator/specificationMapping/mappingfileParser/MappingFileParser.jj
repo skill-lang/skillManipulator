@@ -15,7 +15,11 @@ public class MappingFileParser{  public static Map<String, TypeMapping> parseF
     return typeMappings;  }}PARSER_END(MappingFileParser)SKIP :{  " "| "\r"| "\t"| "\n"}TOKEN : {  < SKILLNAME : ["a"-"z","A"-"Z","_","\u007f"-"\uffff"](["A"-"Z","a"-"z","0"-"9","_","\u007f"-"\uffff"])* >
 | < #UNICODE_LETTER : ["\u007f"-"\uffff"] >}void mappingfile(Map<String, TypeMapping> typeMappings) :{
   TypeMapping t;
-}{  (    t = mapping() { typeMappings.put(t.getTypename(), t); }
+}{  (    t = mapping() {
+      if(typeMappings.put(t.getTypename(), t) != null) {
+        System.out.println("Warning: " + t.getTypename() + " has multiple mappings. Taking last one.");
+      }
+    }
   )*}
 TypeMapping mapping() :
 {
