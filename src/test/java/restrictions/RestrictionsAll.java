@@ -24,6 +24,7 @@ class RestrictionsAll extends CommonSpecificationMappingTest {
         SkillFile sf = SkillFile.open("src/test/resources/restrictions/restrictionsAll.sf");
         sf.changePath(path);
         ((SkillState)sf).prettyPrint();
+        sf.check();
         sf.close();
         
         SkillFile sfActual = SkillFile.open(path);
