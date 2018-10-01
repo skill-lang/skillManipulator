@@ -1,12 +1,11 @@
 package de.ust.skill.manipulator.utils;
 
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Iterator;
 
-import de.ust.skill.common.java.internal.FieldType;
 import de.ust.skill.common.java.internal.FieldDeclaration;
 import de.ust.skill.common.java.internal.FieldIterator;
+import de.ust.skill.common.java.internal.FieldType;
 import de.ust.skill.common.java.internal.StoragePool;
 import de.ust.skill.common.java.internal.fieldTypes.ConstantLengthArray;
 import de.ust.skill.common.java.internal.fieldTypes.MapType;
@@ -51,12 +50,12 @@ public final class FieldUtils {
 	 * @param ofType - name of type
 	 * @return - true if successful, otherwise false
 	 */
-	public static boolean removeField(SkillFile sf, String fieldname, String ofType) {
+	public static void removeField(SkillFile sf, String fieldname, String ofType) {
 		SkillState state = (SkillState)sf;
 		StoragePool<?,?> type = state.pool(ofType);
-		if(type == null) return false;
+		if(type == null) return;
 		
-		return removeField(fieldname, type);
+		removeField(fieldname, type);
 	}
 
 	/**
@@ -68,20 +67,20 @@ public final class FieldUtils {
 	 * @param type - type in which the field is located
 	 * @return - true if successful, otherwise false
 	 */
-	public static boolean removeField(String fieldname, StoragePool<?, ?> type) {
+	public static void removeField(String fieldname, StoragePool<?, ?> type) {
 		boolean foundField = false;
-		for(int i = 0; i < type.dataFields.size() && !foundField; i++) {
-			if(type.dataFields.get(i).name().equals(fieldname)) {
-				type.dataFields.remove(i);
+		Iterator<?> it = type.dataFields.iterator();
+		while(it.hasNext()) {
+			FieldDeclaration<?, ?> f = (FieldDeclaration<?,?>) it.next();
+			if(f.name().equals(fieldname)) {
+				it.remove();
 				foundField = true;
+			} else if(foundField) {
+				f.index = f.index - 1;
 			}
 		}
 
-		if(foundField) {
-			renewFieldIndices(type);
-			return true;
-		}
-
+		if(foundField) return;
 		System.out.println("Field " + fieldname + " not found in type " + type.name());
 		FieldIterator fit = type.allFields();
 		while(fit.hasNext()) {
@@ -90,8 +89,6 @@ public final class FieldUtils {
 				System.out.println("Did you mean type " + f.owner().name() + "?");
 			}
 		}
-
-		return false;
 	}
 	
 	/**
@@ -104,18 +101,20 @@ public final class FieldUtils {
 		SkillState state = (SkillState)sf;
 		
 		// set to collect fields to delete
-		Set<FieldDeclaration<?, ?>> fieldToDelete = new HashSet<>();
 		for(StoragePool<?, ?> t : state.getTypes()) {
-			fieldToDelete.clear();
-			for(FieldDeclaration<?, ?> f : t.dataFields) {
+			int deletedFields = 0;
+			Iterator<?> it = t.dataFields.iterator();
+			
+			while(it.hasNext()) {
+				FieldDeclaration<?, ?> f = (FieldDeclaration<?,?>) it.next();
 				if(fieldContainsType(typeID, f.type())) {
-					fieldToDelete.add(f);
+					it.remove();
+					deletedFields += 1;
+				} else {
+					f.index = f.index - deletedFields;
 				}
 			}
-			if(!fieldToDelete.isEmpty()) {
-				t.dataFields.removeAll(fieldToDelete);
-				renewFieldIndices(t);
-			}
+
 		}
 
 	}
