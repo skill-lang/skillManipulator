@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.ust.skill.common.java.api.SkillException;
 import de.ust.skill.common.java.internal.FieldDeclaration;
 import de.ust.skill.common.java.internal.FieldType;
 import de.ust.skill.common.java.internal.SkillObject;
@@ -389,12 +388,10 @@ public class FieldCompatibilityChecker {
 			// O(1) algorithm based on "Determining Type, Part, Color and Time relationships" 
 			// by LK Schubert, MA Papalaskaris, J Taugher
 			SkillObject newO = specificationMapper.calculateNewSkillObject((SkillObject) o);
-			if(newO != null) {
-				int objID = newO.getSkillID();
-				int bpo = specificationMapper.newLbpoMap[newType.typeID - 32];
-				return bpo < objID && objID <= bpo + ((StoragePool<?,?>)newType).size();
-			}
-			return true;
+
+			int objID = newO.getSkillID();
+			int bpo = specificationMapper.newLbpoMap[newType.typeID - 32];
+			return bpo < objID && objID <= bpo + ((StoragePool<?,?>)newType).size();
 		}
 
 	}

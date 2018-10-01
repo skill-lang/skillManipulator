@@ -97,9 +97,9 @@ public class SpecificationMapper {
 	
 	public SkillFile map(TypeContext tc, SkillFile sf, Path targetPath, String mappingfile)
 			throws ParseException, IOException, InterruptedException, SkillException {
-		if(mappingfile != null) {
-			typeMappings = MappingFileParser.parseFile(mappingfile);
-		}
+		
+		typeMappings = MappingFileParser.parseFile(mappingfile);
+		
 		return map(tc, sf, targetPath);
 	}
 
@@ -239,9 +239,7 @@ public class SpecificationMapper {
 								returnState = false;
 							}
 						} else {
-							if(newPool.size() > 0) {
-								addToMappingLog(new FieldNotFoundInformation(oldField, oldPool, newPool));
-							}
+							addToMappingLog(new FieldNotFoundInformation(oldField, oldPool, newPool));
 						}
 					}
 				}
@@ -301,7 +299,6 @@ public class SpecificationMapper {
 	protected SkillObject calculateNewSkillObject(SkillObject oldObject) {
 		StoragePool<?,?> oldPool = oldState.pool(oldObject.skillName());
 		StoragePool<?,?> newPool = poolMapping.get(oldPool);
-		if(newPool == null) return null;
 		
 		// skill id - lbpo(oldPool) => relative id in oldPool
 		// relative id in oldPool + lbpo(newPool) => relative id in new pool
