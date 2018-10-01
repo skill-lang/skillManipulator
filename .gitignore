@@ -6,3 +6,5 @@ target/**
 project/**
 !project/plugins.sbt
 target/**
+
+*.csv
