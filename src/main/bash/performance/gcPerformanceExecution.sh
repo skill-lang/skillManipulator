@@ -1,10 +1,10 @@
 #!/bin/bash
 
 FILES="/media/olibroe/DATA/Ubuntu_Data/imlfiles/*.sf"
-EXECUTIONS=100
+EXECUTIONS=10
 COUNTER="java -Xmx12g -Xms12g -XX:MaxHeapFreeRatio=100 -jar NodeCounter.jar"
 
-HEAPSIZES=(14)
+HEAPSIZES=(16 14 12 8 6 4 2 1)
 
 roots="imlgraph metainformation"
 for heapsize in "${HEAPSIZES[@]}"; do
