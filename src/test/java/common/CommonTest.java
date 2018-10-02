@@ -3,6 +3,7 @@ package common;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.util.List;
 
@@ -42,8 +43,11 @@ public abstract class CommonTest {
 		specialArgs.add(path.toString());
 
 		CLI.main(specialArgs.toArray(new String[specialArgs.size()]));
-
-		SkillFile sfExpected = SkillFile.open(expectedFilename);
+		
+		SkillFile sfExpected;
+		if(Files.exists(Paths.get(expectedFilename))) sfExpected = SkillFile.open(expectedFilename);
+		else sfExpected = SkillFile.open("src/test/resources/empty-file.sf");
+			
 		SkillFile sfActual = SkillFile.open(path);
 		SkillfileComparator.compareSkillFiles(sfExpected, sfActual);
 	}
