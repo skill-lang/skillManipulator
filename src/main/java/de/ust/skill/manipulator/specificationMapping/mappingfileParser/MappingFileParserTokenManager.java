@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.util.Map;
 import java.util.HashMap;
 import java.io.FileNotFoundException;
+import de.ust.skill.manipulator.OutputPrinter;
 
 /** Token Manager. */
 public class MappingFileParserTokenManager implements MappingFileParserConstants

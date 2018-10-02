@@ -15,6 +15,7 @@ import de.ust.skill.common.java.internal.SkillObject;
 import de.ust.skill.common.java.internal.StoragePool;
 import de.ust.skill.common.java.internal.fieldTypes.MapType;
 import de.ust.skill.common.java.internal.fieldTypes.SingleArgumentType;
+import de.ust.skill.manipulator.OutputPrinter;
 import de.ust.skill.manipulator.internal.SkillFile;
 import de.ust.skill.manipulator.internal.SkillState;
 import de.ust.skill.manipulator.utils.FieldUtils;
@@ -64,7 +65,7 @@ public class GarbageCollector {
 		// create garbage collection object
 		GarbageCollector gc = new GarbageCollector(sf, keepCollectionFields, printStatistics, printProgress);
 
-		if(printStatistics || printProgress) System.out.println("Starting garbage collection");
+		if(printStatistics || printProgress) OutputPrinter.println("Starting garbage collection");
 		
 		int rootObjects = 0;
 
@@ -92,9 +93,9 @@ public class GarbageCollector {
 		}
 
 		if (printStatistics) {
-		      System.out.println("  total objects: " + gc.totalObjects);
-		      System.out.println("  root objects: " + rootObjects);
-		      System.out.println("Collecting done: " + (System.currentTimeMillis() - start));
+			OutputPrinter.println("  total objects: " + gc.totalObjects);
+			OutputPrinter.println("  root objects: " + rootObjects);
+			OutputPrinter.println("Collecting done: " + (System.currentTimeMillis() - start));
 		}
 
 		// remove dead objects, that are not reachable from the root objects
@@ -103,7 +104,7 @@ public class GarbageCollector {
 		// remove types and fields that are not used
 		gc.removeDeadTypesAndFields();
 		
-		if(printStatistics || printProgress) System.out.println("done. Time: " + (System.currentTimeMillis() - start));
+		if(printStatistics || printProgress) OutputPrinter.println("done. Time: " + (System.currentTimeMillis() - start));
 	}
 
 	private GarbageCollector(SkillFile sf, boolean keepCollectionFields, boolean printStatistics, boolean printProgress) {
@@ -211,13 +212,13 @@ public class GarbageCollector {
 			if(t.superPool == null)
 				for(SkillObject o : t) 
 					if(!o.isDeleted() && !o.marked) {
-						if(printProgress) System.out.println("delete: " + o);
+						if(printProgress) OutputPrinter.println("delete: " + o);
 						state.delete(o);
 						--reachable;
 					}
 		}
 		
-		if (printStatistics) System.out.println("  reachable: " + reachable);
+		if (printStatistics) OutputPrinter.println("  reachable: " + reachable);
 	}
 
 	/**

@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.HashMap;
 import java.io.FileNotFoundException;
 
+import de.ust.skill.manipulator.OutputPrinter;
+
 public class MappingFileParser{  public static Map<String, TypeMapping> parseFile(String mappingfile) throws ParseException, FileNotFoundException  {    MappingFileParser parser = new MappingFileParser(new FileInputStream(mappingfile));
 
     Map<String, TypeMapping> typeMappings = new HashMap<String, TypeMapping>(); 
@@ -17,7 +19,7 @@ public class MappingFileParser{  public static Map<String, TypeMapping> parseF
   TypeMapping t;
 }{  (    t = mapping() {
       if(typeMappings.put(t.getTypename(), t) != null) {
-        System.out.println("Warning: " + t.getTypename() + " has multiple mappings. Taking last one.");
+        OutputPrinter.println("Warning: " + t.getTypename() + " has multiple mappings. Taking last one.");
       }
     }
   )*}

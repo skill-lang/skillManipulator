@@ -11,6 +11,7 @@ import de.ust.skill.common.java.internal.fieldTypes.ConstantLengthArray;
 import de.ust.skill.common.java.internal.fieldTypes.MapType;
 import de.ust.skill.common.java.internal.fieldTypes.SingleArgumentType;
 import de.ust.skill.common.java.restrictions.DefaultValue;
+import de.ust.skill.manipulator.OutputPrinter;
 import de.ust.skill.manipulator.internal.SkillFile;
 import de.ust.skill.manipulator.internal.SkillState;
 
@@ -81,12 +82,12 @@ public final class FieldUtils {
 		}
 
 		if(foundField) return;
-		System.out.println("Field " + fieldname + " not found in type " + type.name());
+		OutputPrinter.println("Field " + fieldname + " not found in type " + type.name());
 		FieldIterator fit = type.allFields();
 		while(fit.hasNext()) {
 			FieldDeclaration<?, ?> f = fit.next();
 			if(f.name().equals(fieldname)) {
-				System.out.println("Did you mean type " + f.owner().name() + "?");
+				OutputPrinter.println("Did you mean type " + f.owner().name() + "?");
 			}
 		}
 	}

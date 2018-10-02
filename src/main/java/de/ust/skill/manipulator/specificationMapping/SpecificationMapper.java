@@ -25,6 +25,7 @@ import de.ust.skill.common.java.internal.fieldTypes.MapType;
 import de.ust.skill.common.java.internal.fieldTypes.SingleArgumentType;
 import de.ust.skill.common.java.internal.parts.Block;
 import de.ust.skill.ir.TypeContext;
+import de.ust.skill.manipulator.OutputPrinter;
 import de.ust.skill.manipulator.internal.SkillFile;
 import de.ust.skill.manipulator.internal.SkillState;
 import de.ust.skill.manipulator.specificationMapping.mappingfileParser.MappingFileParser;
@@ -121,7 +122,7 @@ public class SpecificationMapper {
 		
 		newState.check();
 		
-		System.out.println(logToString());
+		OutputPrinter.println(logToString());
 		
 		if(returnState) return newState;
 		else return null;

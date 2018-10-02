@@ -48,6 +48,9 @@ public class CLI {
 		if(!parseSkillfile()) return;
 
 		if(line.hasOption("o")) outpath = Paths.get(line.getOptionValue("o"));
+		
+		OutputPrinter.disableOutput();
+		if(line.hasOption("silent")) OutputPrinter.disableOutput();
 
 		// execute chosen mode
 		if(line.hasOption("h")) {
@@ -168,6 +171,8 @@ public class CLI {
 				.argName("file")
 				.desc("Specify output file. Otherwise the input file is overwritten.")
 				.build());
+		
+		options.addOption(new Option("silent", "Disable all output operations."));
 		
 		/**
 		 * GC options

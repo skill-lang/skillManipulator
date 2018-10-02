@@ -15,6 +15,7 @@ import de.ust.skill.common.java.internal.fieldTypes.Annotation;
 import de.ust.skill.common.java.restrictions.FieldRestriction;
 import de.ust.skill.common.java.restrictions.TypeRestriction;
 import de.ust.skill.common.jvm.streams.FileInputStream;
+import de.ust.skill.manipulator.OutputPrinter;
 
 /**
  * Internal implementation of SkillFile.
@@ -104,6 +105,6 @@ public final class SkillState extends de.ust.skill.common.java.internal.SkillSta
 			
 			sb.append("}\n\n");
 		}
-		System.out.println(sb.toString());
+		OutputPrinter.println(sb.toString());
 	}
 }
