@@ -11,7 +11,7 @@ import de.ust.skill.manipulator.specificationMapping.SpecificationMapper;
 class UsertypeCast extends CommonSpecificationMappingTest {
 
 	private static final String FOLDER = "src/test/resources/specificationMapper/usertypeCast/";
-	private static final String STARTFILE = FOLDER + "specification.sf";
+	private static final String STARTFILE = FOLDER + "subtypes.sf";
 
 	protected UsertypeCast() {
 		super(FOLDER, STARTFILE);

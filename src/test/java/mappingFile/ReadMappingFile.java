@@ -16,7 +16,7 @@ class ReadMappingFile extends CommonSpecificationMappingTest {
 	private static final String FOLDER = "src/test/resources/specificationMapper/mappingFiles/";
 
 	protected ReadMappingFile() {
-		super(FOLDER, FOLDER + "../typesystem/specification.sf");
+		super(FOLDER, FOLDER + "../typesystem/subtypes.sf");
 	}
 
 	@Test

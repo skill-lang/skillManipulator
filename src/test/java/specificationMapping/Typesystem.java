@@ -7,7 +7,7 @@ class Typesystem extends CommonSpecificationMappingTest {
 	private static final String FOLDER = "src/test/resources/specificationMapper/typesystem/";
 
 	protected Typesystem() {
-		super(FOLDER, FOLDER + "specification.sf");
+		super(FOLDER, FOLDER + "subtypes.sf");
 	}
 
 }
