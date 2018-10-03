@@ -2,6 +2,12 @@ package de.ust.skill.manipulator.specificationMapping.messages;
 
 import de.ust.skill.common.java.internal.StoragePool;
 
+/**
+ * Information for the user that a type is not found in the new typesystem.
+ * 
+ * @author olibroe
+ *
+ */
 public class TypeNotFoundInformation extends MappingInformation{
 	public final StoragePool<?,?> oldPool;
 	

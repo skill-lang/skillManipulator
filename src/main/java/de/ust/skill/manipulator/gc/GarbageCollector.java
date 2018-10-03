@@ -22,7 +22,8 @@ import de.ust.skill.manipulator.utils.FieldUtils;
 import de.ust.skill.manipulator.utils.TypeUtils;
 
 /**
- * GarbageCollector deletes all Objects that are not reachable from the root set
+ * GarbageCollector deletes all Objects that are not reachable from the root set.
+ * Additionaly the type system and the corresponding strings are reduced to a minimum.
  * 
  * basic idea by Timm Felden, see https://github.com/skill-lang/skillGC
  * modified by Oliver Brösamle
@@ -33,6 +34,7 @@ public class GarbageCollector {
 	// internal implementation of SkillFile is used here to have direct access to types and strings
 	private final SkillState state;
 	
+	// total object count
 	private int totalObjects = 0;
 	
 	private final boolean printStatistics;
@@ -50,8 +52,8 @@ public class GarbageCollector {
 	 * Represents main method of the garbage collection.
 	 * 
 	 * The garbage collection starts with marking the root nodes and then
-	 * marks recursive all nodes reachable from the root nodes. The unmarked
-	 * nodes are deleted.
+	 * recursively marks all nodes reachable from the root nodes. The unmarked
+	 * nodes are deleted. This is known as Mark-Sweep algorithm.
 	 * 
 	 * @param sf - SkillFile to process
 	 * @param roots - represents the roots of the garbage collection
@@ -59,10 +61,12 @@ public class GarbageCollector {
 	 * @param printStatistics - Do you want statistics printed out ?
 	 * @param printProgress - Do you want to get progress printed out ?
 	 */
-	public static void run(SkillFile sf, Set<CollectionRoot> roots, boolean keepCollectionFields, boolean printStatistics, boolean printProgress) {
+	public static void run(SkillFile sf, Set<CollectionRoot> roots, boolean keepCollectionFields, 
+			boolean printStatistics, boolean printProgress) {
+		
 		long start = System.currentTimeMillis();
 		
-		// create garbage collection object
+		// create garbage collection state
 		GarbageCollector gc = new GarbageCollector(sf, keepCollectionFields, printStatistics, printProgress);
 
 		if(printStatistics || printProgress) OutputPrinter.println("Starting garbage collection");
@@ -72,15 +76,19 @@ public class GarbageCollector {
 		// loop over roots and process them
 		if(roots != null) {
 			for(CollectionRoot root : roots) {
+				// get type of root, if type does not exist => skip root
 				StoragePool<?, ?> s = gc.state.pool(root.getType());
 				if(s != null) {
+					// all objects of the type or just one
 					if(root.getId() == CollectionRoot.ALL_IDS) {
+						// all objects of type s are roots
 						for(SkillObject o : s) {	
 							gc.workingQueue.push(o);
 							gc.processSkillObject();
 							rootObjects++;
 						}
 					} else {
+						// get root object, if it does not exist => skip root
 						SkillObject o = s.getByID(root.getId());
 						if(o != null) {
 							gc.workingQueue.push(o);
@@ -104,17 +112,30 @@ public class GarbageCollector {
 		// remove types and fields that are not used
 		gc.removeDeadTypesAndFields();
 		
-		if(printStatistics || printProgress) OutputPrinter.println("done. Time: " + (System.currentTimeMillis() - start));
+		if(printStatistics || printProgress)
+			OutputPrinter.println("done. Time: " + (System.currentTimeMillis() - start));
 	}
 
-	private GarbageCollector(SkillFile sf, boolean keepCollectionFields, boolean printStatistics, boolean printProgress) {
+	/**
+	 * Create the internal state of the garbage collection run.
+	 * 
+	 * @param sf - Skillfile
+	 * @param keepCollectionFields - Do we have to keep all collection fields ?
+	 * @param printStatistics - Print Statistics ? 
+	 * @param printProgress - Print Progress ? 
+	 */
+	private GarbageCollector(SkillFile sf, boolean keepCollectionFields, boolean printStatistics,
+			boolean printProgress) {
+		
+		// get the internal representation of the skillfile
 		this.state = (SkillState) sf;
 		
 		// count total objects
         for (StoragePool<?,?> t : this.state.getTypes()) {
             if(t.superName() == null) this.totalObjects += t.size();
         }	
-          
+        
+        // allocate working queue
         this.workingQueue = new ArrayDeque<>(10000);
         
         this.keepCollectionFields = keepCollectionFields;
@@ -135,7 +156,7 @@ public class GarbageCollector {
 			// get next object
 			SkillObject obj = workingQueue.pop();
 
-			// get pool
+			// get pool to loop over fields
 			StoragePool<?, ?> type = state.pool(obj.skillName());
 
 			// mark node
@@ -148,6 +169,7 @@ public class GarbageCollector {
 
 			while(fit.hasNext()) {
 				f = fit.next();
+				// if the field type can not store references, it is not interesting for us
 				if(!ignoreType(f.type())) {
 					o = f.get(obj);				
 					if(o != null) {
@@ -168,12 +190,11 @@ public class GarbageCollector {
 	 */
 	private void processField(FieldType<?> t, Object o) {
 		switch(t.typeID()) {
-		case 15:
-		case 16:
-		case 17:
-		case 18:
-		case 19:
-			// linear collection
+		case 15: // fixed length array
+		case 17: // variable length array
+		case 18: // list
+		case 19: // set
+			// get base type and process objects
 			FieldType<?> bt = ((SingleArgumentType<?, ?>)t).groundType;
 			for(Object i : (Iterable<?>)o) {
 				processField(bt, i);
@@ -181,6 +202,8 @@ public class GarbageCollector {
 			break;
 		case 20:
 			// map
+			// process key and value
+			// the recursive call to processField is able to process nested maps 
 			MapType<?, ?> mt = (MapType<?, ?>)t; 
 			boolean followKey = !ignoreType(mt.keyType);
 			boolean followVal = !ignoreType(mt.valueType);
@@ -208,10 +231,13 @@ public class GarbageCollector {
 	 */
 	private void removeDeadObjects() {
 		int reachable = totalObjects;
+		
 		for(StoragePool<?,?> t : state.getTypes()) {
+			// it is enough to loop over objects of basepools to iterate through all objects
 			if(t.superPool == null)
 				for(SkillObject o : t) 
 					if(!o.isDeleted() && !o.marked) {
+						// if object is not marked => delete and decrement reachable
 						if(printProgress) OutputPrinter.println("delete: " + o);
 						state.delete(o);
 						--reachable;
@@ -228,6 +254,9 @@ public class GarbageCollector {
 	 *   (for example: a reference to a type and there are no objects of this type existing)
 	 * - for a type: there are no objects of this type
 	 * When removing types or fields, one has to reorder them and refresh their IDs.
+	 * 
+	 * It is important to process the fields first, because if we need to keep a collection
+	 * the basetypes also need to exist.
 	 */
 	private void removeDeadTypesAndFields() {
 		// get list of all types
@@ -251,6 +280,7 @@ public class GarbageCollector {
 		}
 		
 		// keep type if there are objects of this type or we need the type for a collection
+		// if a type is needed, also its superpools are needed
 		Set<StoragePool<?, ?>> irrtypes = new HashSet<>();
 		for (StoragePool<?, ?> pool : types) {
 			if(keepTypes.contains(pool)) {
@@ -320,7 +350,8 @@ public class GarbageCollector {
 	/**
 	 * Returns true if we can ignore the given field type.
 	 * This is the case for all non-user types, because we only want to remove dead SkillObjects.
-	 * Note: The order of the if-conditions is important here.
+	 * Note: The order of the if-conditions is important here, 
+	 * because otherwise we also need to check the lower bounds of id.
 	 *
 	 * @param t - type of field
 	 * @return true if type can be ignored, otherwise false

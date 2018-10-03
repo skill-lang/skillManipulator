@@ -3,6 +3,12 @@ package de.ust.skill.manipulator.specificationMapping.messages;
 import de.ust.skill.common.java.internal.FieldDeclaration;
 import de.ust.skill.common.java.internal.StoragePool;
 
+/**
+ * Information for the user that a field is not found in new typesystem.
+ * 
+ * @author olibroe
+ *
+ */
 public class FieldNotFoundInformation extends MappingInformation {
 	public final FieldDeclaration<?, ?> oldField;
 	public final StoragePool<?,?> oldPool;

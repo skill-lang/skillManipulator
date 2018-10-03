@@ -2,6 +2,12 @@ package de.ust.skill.manipulator.specificationMapping.messages;
 
 import de.ust.skill.common.java.internal.StoragePool;
 
+/**
+ * Information for the user that a type is projected to one of his supertypes in the new typesystem.
+ * 
+ * @author olibroe
+ *
+ */
 public class TypeProjectedInformation extends MappingInformation {
 	public final StoragePool<?,?> oldPool;
 	public final StoragePool<?,?> newPool;

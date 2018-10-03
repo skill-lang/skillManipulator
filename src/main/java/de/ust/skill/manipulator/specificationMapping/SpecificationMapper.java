@@ -1,5 +1,6 @@
 package de.ust.skill.manipulator.specificationMapping;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -38,6 +39,12 @@ import de.ust.skill.manipulator.specificationMapping.messages.TypeNotFoundInform
 import de.ust.skill.manipulator.specificationMapping.messages.TypeProjectedInformation;
 import de.ust.skill.manipulator.utils.FieldUtils;
 
+/**
+ * This class provides methods to map a Skill-Graph on a new specification.
+ * 
+ * @author olibroe
+ *
+ */
 public class SpecificationMapper {
 	
 	// maps pools from old state to new state
@@ -47,10 +54,11 @@ public class SpecificationMapper {
 	// in detail there are name to name mappings for types and fields
 	private Map<String, TypeMapping> typeMappings = null;
 	
+	// store old and new Skillstate
 	protected SkillState newState;
 	private SkillState oldState;
 	
-	// lbpo maps of the old and new types
+	// lbpo maps of the old and new typesystem
 	protected int[] newLbpoMap;
 	private int[] oldLbpoMap;
 	
@@ -59,13 +67,24 @@ public class SpecificationMapper {
 	// the relative position of the projected type in the type it is projected to 
 	private int[] projectionOffsetMap;
 	
+	// stores mapping information
 	private Set<MappingInformation> mappingLog = new HashSet<>();
 	private boolean returnState = true;
 	
+	/**
+	 * Add Mapping Information to the log of this specification mapping process.
+	 * 
+	 * @param info - the information to be stored
+	 */
 	public void addToMappingLog(MappingInformation info) {
 		mappingLog.add(info);
 	}
 	
+	/**
+	 * Get the mapping informations of this mapping process.
+	 * 
+	 * @return - set of mapping informations
+	 */
 	public Set<MappingInformation> getMappingLog() {
 		return mappingLog;
 	}
@@ -96,40 +115,87 @@ public class SpecificationMapper {
 		return sb.toString();
 	}
 	
+	/**
+	 * Maps the given Skillfile sf on the new Specification tc.
+	 * The method creates a new Skillfile that is created at targetPath.
+	 * The parameter mappigfile is a string with a path to a mapping file that contains name mappings for types
+	 * and fields. 
+	 * 
+	 * @param tc - TypeContext of the new specification
+	 * @param sf - Skillfile to map
+	 * @param targetPath - Path where the new Skillfile should be created
+	 * @param mappingfile - Mappingfile with name to name mappings
+	 * @return - new SKillfile with typesystem as in the TypeContext and information from Skillfile sf
+	 * @throws ParseException - thrown if the mapping file given by the string mappingfile is syntactically wrong
+	 * @throws FileNotFoundException - thrown if string mappingfile is not the path to a mapping file
+	 * @throws IOException - thrown if the new Skillfile could not be created
+	 * @throws InterruptedException - thrown if the object allocation in the new Skillfile fails
+	 * @throws SkillException - thrown if some restriction check fails
+	 */
 	public SkillFile map(TypeContext tc, SkillFile sf, Path targetPath, String mappingfile)
-			throws ParseException, IOException, InterruptedException, SkillException {
+			throws ParseException, FileNotFoundException, IOException, InterruptedException, SkillException {
 		
 		typeMappings = MappingFileParser.parseFile(mappingfile);
 		
 		return map(tc, sf, targetPath);
 	}
 
+	/**
+	 * Maps the given Skillfile sf on the new Specification tc.
+	 * The method creates a new Skillfile that is created at targetPath.
+	 * 
+	 * @param tc - TypeContext of the new specification
+	 * @param sf - Skillfile to map
+	 * @param targetPath - Path where the new Skillfile should be created
+	 * @param mappingfile - Mappingfile with name to name mappings
+	 * @return - new SKillfile with typesystem as in the TypeContext and information from Skillfile sf
+	 * @throws IOException - thrown if the new Skillfile could not be created
+	 * @throws InterruptedException - thrown if the object allocation in the new Skillfile fails
+	 * @throws SkillException - thrown if some restriction check fails
+	 */
 	public SkillFile map(TypeContext tc, SkillFile sf, Path targetPath) 
 			throws IOException,InterruptedException, SkillException {
 		oldState = (SkillState)sf;
 		
+		// create the new typesystem according to the type context
 		newState = StateCreator.createNewState(tc, targetPath);
 		
+		// map the old typesystem to the new typesystem
 		mapStates();
 		
+		// fix types to have faster size operations
 		StoragePool.fixed(newState.getTypes());
 		
+		// transfer the objects
 		transferObjects();
 	
+		// transfer the field data
 		transferFields();
 		
+		// unfix types
 		StoragePool.unfix(newState.getTypes());
 		
+		// check restrictions
 		newState.check();
 		
 		OutputPrinter.println(logToString());
 		
+		// only return state if there are no critical failures
 		if(returnState) return newState;
 		else return null;
 	}
 		
+	/**
+	 * Maps the old typesystem to the new typesystem.
+	 * This is a type to type mapping.
+	 * Types are mapped by name equivalence (mapping file can change names).
+	 * If no equivalent name can be found, the method tries to map the type to one of his supertypes.
+	 * If no mapping can be found at all, the type is mapped to null.
+	 */
 	private void mapStates() {
 		StoragePool<?,?> newPool;
+		
+		// while we are mapping we calculate the bpos and projectionOffsets for the old types
 		oldLbpoMap = new int[oldState.getTypes().size()];
 		projectionOffsetMap = new int[oldState.getTypes().size()];
 		
@@ -139,15 +205,16 @@ public class SpecificationMapper {
 			// get name equivalent pool in new state
 			newPool = newState.pool(getTypeName(oldPool.name()));
 			
-			// if new pool is null, we want to project the type to one of its superpools
-			// because of the type order we can take the mapping of the direct supertype
-			// if we can not project the type, the mapping of the superpool will be null
+			// if new pool is null, there could not be found a direct mapping
 			if(newPool == null) {
+				// map pool to mapping of superpool
+				// if superpool has no mapping, the result is null -> no mapping
 				newPool = poolMapping.get(oldPool.superPool);
 				if(newPool != null) {
 					// if we can project the old pool, we need the offset map later to refer to the types instances
 					projectionOffsetMap[oldPool.typeID-32] = newPool.staticDataInstances;
 					newPool.staticDataInstances += oldPool.staticDataInstances;
+					
 					addToMappingLog(new TypeProjectedInformation(oldPool, newPool));
 				} else {
 					addToMappingLog(new TypeNotFoundInformation(oldPool));
@@ -156,6 +223,7 @@ public class SpecificationMapper {
 				newPool.staticDataInstances += oldPool.staticDataInstances;
 			}
 			
+			// store mapping
 			poolMapping.put(oldPool, newPool);
 			
 			// create oldLbpoMap
@@ -167,17 +235,25 @@ public class SpecificationMapper {
 		}
 	}
 
+	/**
+	 * Transfer the objects from old state to new state. 
+	 * This is done by transferring the object information and then allocating the objects in new typesystem.
+	 * 
+	 * @throws InterruptedException - thrown if there happens an error while allocating objects
+	 */
 	@SuppressWarnings("unchecked")
 	private <T> void transferObjects() throws InterruptedException {	
 		// calculate new lbpos
 		newLbpoMap = new int[newState.getTypes().size()];
 		int lbpo = 0;
 		
+		// loop over new types and create bpos and add object information 
 		for(StoragePool<?,?> newPool : newState.getTypes()) {
 			if(newPool.superPool == null) {
 				lbpo = 0;
 			}
 			newLbpoMap[newPool.typeID-32] = lbpo;
+			// this adds the object information
 			newPool.blocks().add(new Block(lbpo, newPool.size(), newPool.staticDataInstances));
 			lbpo += newPool.staticDataInstances;
 		}
@@ -190,10 +266,10 @@ public class SpecificationMapper {
 				reads += ((BasePool<?>) newPool).performAllocations(barrier);
 			}
 		}
-		
 		barrier.acquire(reads);
 		
 		// set default values
+		// the default values are overwritten by field data if there is field data
 		for(StoragePool<?,?> newPool : newState.getTypes()) {
 			StaticFieldIterator fit = newPool.fields();
 			while(fit.hasNext()) {
@@ -210,6 +286,9 @@ public class SpecificationMapper {
 		}
 	}
 	
+	/**
+	 * Transfer the field values.
+	 */
 	private void transferFields() {
 		FieldCompatibilityChecker checker = new FieldCompatibilityChecker(this);
 		FieldIterator oldFieldIt;
@@ -234,8 +313,12 @@ public class SpecificationMapper {
 						newField = searchField(searchString, newPool);
 						
 						if(newField != null) {
-							if(checker.fieldsCompatible(oldField, newField, oldPool)) transferFieldData(oldField, newField, oldPool);
+							// if we have found a field, check if the fields are compatible and transfer data
+							if(checker.fieldsCompatible(oldField, newField, oldPool)) 
+								transferFieldData(oldField, newField, oldPool);
 							else {
+								// if the fields are not compatible, we do not want to create a new state
+								// because this is a critical failure
 								addToMappingLog(new FieldIncompatibleInformation(oldField, newField, oldPool, newPool));
 								returnState = false;
 							}
@@ -248,6 +331,14 @@ public class SpecificationMapper {
 		}
 	}
 
+	/**
+	 * Search field with name fieldname in the fields of type new pool.
+	 * The fields inherited by supertypes are included in the search.
+	 * 
+	 * @param fieldname - name of the field to search
+	 * @param newPool - type to search in
+	 * @return field if found, otherwise null
+	 */
 	private FieldDeclaration<?,?> searchField(String fieldname, StoragePool<?, ?> newPool) {
 		FieldIterator newFieldIt = newPool.allFields();
 		FieldDeclaration<?, ?> newField;
@@ -260,8 +351,20 @@ public class SpecificationMapper {
 		return null;
 	}
 
+	/**
+	 * Transfer the field data. The compatibility of fields is checked before this step.
+	 * The data is transferred for every type that has the field independently. This is because a field in the old
+	 * typesystem could be splitted in multiple field in the new typsystem.
+	 * 
+	 * @param oldField - data from this field
+	 * @param newField - data to this field
+	 * @param oldPool - field data for the objects of this type
+	 */
 	@SuppressWarnings("unchecked")
-	private <T> void transferFieldData(FieldDeclaration<?, ?> oldField, FieldDeclaration<T, ?> newField, StoragePool<?,?> oldPool) {	
+	private <T> void transferFieldData(FieldDeclaration<?, ?> oldField, FieldDeclaration<T, ?> newField,
+			StoragePool<?,?> oldPool) {	
+		
+		// value conversion is necessary because the field types could be different
 		ValueConversion valueConv = dispatchConversion(newField.type());
 		
 		StaticDataIterator<?> sit = oldPool.staticInstances();
@@ -275,6 +378,13 @@ public class SpecificationMapper {
 		}
 	}
 	
+	/**
+	 * Return the typename of the type in the new typesystem. 
+	 * This could be influenced by mapping file.
+	 * 
+	 * @param name - name of type in old typesystem
+	 * @return name in new typesystem
+	 */
 	private String getTypeName(String name) {
 		if(typeMappings != null) {
 			TypeMapping tm = typeMappings.get(name);
@@ -286,10 +396,18 @@ public class SpecificationMapper {
 		return name;
 	}
 	
+	/**
+	 * Return the fieldname of the field in the new typesystem. 
+	 * This could be influenced by mapping file.
+	 * 
+	 * @param oldField - field in old typesystem
+	 * @return fieldname in new typesystem
+	 */
 	private String getFieldName(FieldDeclaration<?, ?> oldField) {
 		if(typeMappings != null) {
 			TypeMapping tm = typeMappings.get(oldField.owner().name());
 			if(tm != null) {
+				// if there is no field mapping the getFieldMapping method returns the string of the parameter
 				String name = tm.getFieldMapping(oldField.name());
 				return name;
 			}
@@ -297,6 +415,14 @@ public class SpecificationMapper {
 		return oldField.name();
 	}
 	
+	/**
+	 * Calculate the corresponding Skillobject in the new typesystem.
+	 * Call this method only for Skillobjects that are present in the new typesystem, otherwise a nullpointer
+	 * exception is thrown.
+	 * 
+	 * @param oldObject - the object for which we want to calculate the corresponding SKillobject
+	 * @return calculated Skillobject
+	 */
 	protected SkillObject calculateNewSkillObject(SkillObject oldObject) {
 		StoragePool<?,?> oldPool = oldState.pool(oldObject.skillName());
 		StoragePool<?,?> newPool = poolMapping.get(oldPool);
@@ -311,6 +437,13 @@ public class SpecificationMapper {
 	}
 	
 	private final ValueConversion usertypeConv = new UsertypeConversion();
+
+	/**
+	 * Returns the data conversion interface for every possible field type.
+	 * 
+	 * @param newType - type of the field
+	 * @return value conversion interface
+	 */
 	private ValueConversion dispatchConversion(FieldType<?> newType) {
 		int id = newType.typeID;
 		if(id == 6 || id == 14) return StandardConversion.get();
@@ -320,10 +453,20 @@ public class SpecificationMapper {
 		else return usertypeConv;
 	}
 	
+	/**
+	 * Value Conversion only needs convert method
+	 * @author olibroe
+	 *
+	 */
 	private static abstract class ValueConversion {
 		abstract Object convert(Object o);
 	}
 	
+	/**
+	 * Conversion for bool and string simply returns objects.
+	 * @author olibroe
+	 *
+	 */
 	private static class StandardConversion extends ValueConversion {
 		private final static StandardConversion sConv = new StandardConversion();
 		
@@ -337,6 +480,11 @@ public class SpecificationMapper {
 		}
 	}
 	
+	/**
+	 * Number conversion is done through methods of java.lang.Number
+	 * @author olibroe
+	 *
+	 */
 	private static abstract class NumberConversion extends ValueConversion{
 		private final static ByteConversion byteConv = new ByteConversion();
 		private final static ShortConversion shortConv = new ShortConversion();
@@ -403,6 +551,11 @@ public class SpecificationMapper {
 		}
 	}
 	
+	/**
+	 * Linear collection conversion creates a new collection for every old collection.
+	 * @author olibroe
+	 *
+	 */
 	private class LinearCollectionConversion extends ValueConversion {
 		private final ValueConversion baseTypeConversion;
 		private final CollectionCreator collectionCreator;
@@ -459,6 +612,11 @@ public class SpecificationMapper {
 		
 	}
 	
+	/**
+	 * Creates a new Map for the old map.
+	 * @author olibroe
+	 *
+	 */
 	private class MapConversion extends ValueConversion {
 		private final ValueConversion keyTypeConversion;
 		private final ValueConversion valueTypeConversion;
@@ -482,6 +640,11 @@ public class SpecificationMapper {
 		}
 	}
 	
+	/**
+	 * Usertype conversion only has to call the calculateNewSkillObject method. 
+	 * @author olibroe
+	 *
+	 */
 	private class UsertypeConversion extends ValueConversion {	
 		@Override
 		Object convert(Object o) {

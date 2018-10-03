@@ -13,42 +13,77 @@ import de.ust.skill.common.java.internal.fieldTypes.FloatType;
 import de.ust.skill.common.java.internal.fieldTypes.IntegerType;
 import de.ust.skill.common.java.internal.fieldTypes.MapType;
 import de.ust.skill.common.java.internal.fieldTypes.SingleArgumentType;
+import de.ust.skill.manipulator.specificationMapping.messages.FieldMappingInformation;
 
+/**
+ * This class provides a function to check the compatibility of two fields.
+ * 
+ * @author olibroe
+ *
+ */
 public class FieldCompatibilityChecker {
+	
+	// possible results of the static check
 	protected enum TypeRelation { COMPATIBLE, DYN_CHECK_NEEDED, NOT_COMPATIBLE };
 	
+	// corresponding SpecificationMapper, needed for usertype checks
 	private SpecificationMapper specificationMapper;
 	
 	public FieldCompatibilityChecker(SpecificationMapper specificationMapper) {
 		this.specificationMapper = specificationMapper;
 	}
 	
-	public boolean fieldsCompatible(FieldDeclaration<?, ?> oldField, FieldDeclaration<?, ?> newField, StoragePool<?,?> oldPool) {
+	/**
+	 * The compatibility is checked in two steps:
+	 * 1. Static Check: Check the static compatibility of field types. 
+	 * 2. Dynamic Check: Only needed when the static check can not decide.
+	 * 					 Then all objects of the old field are checked for compatibility with the new field type.
+	 * 
+	 * @param oldField - field of the old typesystem
+	 * @param newField - field of the new typesystem
+	 * @param oldPool - type which object need to be checked in dynamic check
+	 * @return
+	 */
+	public boolean fieldsCompatible(FieldDeclaration<?, ?> oldField, FieldDeclaration<?, ?> newField,
+			StoragePool<?,?> oldPool) {
+		
+		// get the right checks
 		Check check = dispatchField(newField.type());
 		
+		// 1.static check
 		TypeRelation tr = check.staticCheck(oldField.type());
 		
 		if(tr == TypeRelation.NOT_COMPATIBLE) return false;
 
+		// 2.dynamic check if needed
 		if(tr == TypeRelation.DYN_CHECK_NEEDED) {
 			for(SkillObject o : oldPool) {
 				if(!check.dynamicCheck(oldField.get(o))) return false;
 			}
 		}
 		
+		// warning for float -> int mappings
 		if(oldField.type() instanceof FloatType<?> && newField.type() instanceof IntegerType) {
-			// TODO
-//			MappingLog.genIntFloatWarning(oldField, newField);
+			specificationMapper.addToMappingLog(new FieldMappingInformation(oldField, newField,
+					"Mapping from floating point type to integer type may lead to loss of precision"));
 		}
 
+		// warning for int -> float mappings
 		if(oldField.type() instanceof IntegerType && newField.type() instanceof FloatType<?>) {
-			// TODO
-//			MappingLog.genIntFloatWarning(oldField, newField);
+			specificationMapper.addToMappingLog(new FieldMappingInformation(oldField, newField,
+					"Mapping from integer type to floating point type may lead to loss of precision"));
 		}
 		
 		return  true;
 	}
 
+	/**
+	 * Every type has its own implementation of checks. This function gives the right checks for the given
+	 * field type. The returned Check has implemented checks for cast ON newType.
+	 * 
+	 * @param newType - type for which we need checks
+	 * @return instance of Check interface
+	 */
 	private Check dispatchField(FieldType<?> newType) {
 		int typeID = newType.typeID;
 		
@@ -76,64 +111,91 @@ public class FieldCompatibilityChecker {
 		}
 	}
 	
+	// this checks are not dependent on new type and therefore can be initialized at the beginning
 	private final AnnotationCheck annotationCheck = new AnnotationCheck();
 	private final BoolCheck boolCheck = new BoolCheck();
-	private final ByteCheck byteCheck = new ByteCheck();
-	private final ShortCheck shortCheck = new ShortCheck();
-	private final IntCheck intCheck = new IntCheck();
-	private final LongCheck longCheck = new LongCheck();
-	private final FloatCheck floatCheck = new FloatCheck();
-	private final DoubleCheck doubleCheck = new DoubleCheck();
+	private final I8Check byteCheck = new I8Check();
+	private final I16Check shortCheck = new I16Check();
+	private final I32Check intCheck = new I32Check();
+	private final I64Check longCheck = new I64Check();
+	private final F32Check floatCheck = new F32Check();
+	private final F64Check doubleCheck = new F64Check();
 	private final StringCheck stringCheck = new StringCheck();
 	
+	/**
+	 * This is the abstract definition of a check interface.
+	 * It provides a static and a dynamic check method.
+	 * 
+	 * @author olibroe
+	 *
+	 */
 	private abstract class Check {	
 		abstract TypeRelation staticCheck(FieldType<?> oldType);
 		abstract boolean dynamicCheck(Object o);
 	}
 	
+	/**
+	 * Checks for cast on annotation type.
+	 * @author olibroe
+	 *
+	 */
 	private class AnnotationCheck extends Check {
 		@Override
 		TypeRelation staticCheck(FieldType<?> oldType) {
+			// old type can be annotation(=5) itself or usertype(>=32) to be compatible 
 			if(oldType.typeID == 5 || oldType.typeID >= 32) return TypeRelation.COMPATIBLE;
 			return TypeRelation.NOT_COMPATIBLE;
 		}
 
 		@Override
 		boolean dynamicCheck(Object o) {
-			// not needed for annotation
+			// not needed for cast on annotation
 			return true;
 		}
 
 	}
 	
+	/**
+	 * Checks for cast on bool type.
+	 * @author olibroe
+	 *
+	 */
 	private class BoolCheck extends Check {
 		@Override
 		TypeRelation staticCheck(FieldType<?> oldType) {
+			// only compatible with bool type itself
 			if(oldType.typeID == 6) return TypeRelation.COMPATIBLE;
 			return TypeRelation.NOT_COMPATIBLE;
 		}
 
 		@Override
 		boolean dynamicCheck(Object o) {
-			// can not happen for bool
+			// not needed for cast on bool
 			return true;
 		}
 
 	}
 	
-	private class ByteCheck extends Check {
+	/**
+	 * Checks for cast on i8 type.
+	 * @author olibroe
+	 *
+	 */
+	private class I8Check extends Check {
 		@Override
 		TypeRelation staticCheck(FieldType<?> oldType) {
 			int id = oldType.typeID;
+			// compatible with itself
 			if(id == 7) return TypeRelation.COMPATIBLE;
+			// dynamic check needed for bigger int types i16,i32,i64,v64 and float types f32,f64
 			if(8 <= id && id <= 13) return TypeRelation.DYN_CHECK_NEEDED;
 			return TypeRelation.NOT_COMPATIBLE;
 		}
 
 		@Override
 		boolean dynamicCheck(Object o) {
-			// Object o can be either Long, Int, Short or Float/Double
-			// int and short can be converted losless to double
+			// Object o can be either Long, Int, Short or Float/Double according to static check
+			// int and short can be converted lossless to double
 			if(o instanceof Long) {
 				long value = ((Number)o).longValue();
 				return Byte.MIN_VALUE <= value && value <= Byte.MAX_VALUE; 
@@ -146,11 +208,18 @@ public class FieldCompatibilityChecker {
 
 	}
 	
-	private class ShortCheck extends Check {
+	/**
+	 * Checks for cast on i16 type.
+	 * @author olibroe
+	 *
+	 */
+	private class I16Check extends Check {
 		@Override
 		TypeRelation staticCheck(FieldType<?> oldType) {
 			int id = oldType.typeID;
+			// compatible with itself and i8
 			if(7 <= id && id <= 8) return TypeRelation.COMPATIBLE;
+			// dynamic check needed for bigger int types i32,i64,v64 and float types f32,f64
 			if(9 <= id && id <= 13) return TypeRelation.DYN_CHECK_NEEDED;
 			return TypeRelation.NOT_COMPATIBLE;
 		}
@@ -158,7 +227,7 @@ public class FieldCompatibilityChecker {
 		@Override
 		boolean dynamicCheck(Object o) {
 			// Object o can be either Long, Int or Float/Double
-			// int can be converted losless to double
+			// int can be converted lossless to double
 			if(o instanceof Long) {
 				long value = ((Number)o).longValue();
 				return Short.MIN_VALUE <= value && value <= Short.MAX_VALUE; 
@@ -171,11 +240,18 @@ public class FieldCompatibilityChecker {
 
 	}
 	
-	private class IntCheck extends Check {
+	/**
+	 * Checks for cast on i32 type.
+	 * @author olibroe
+	 *
+	 */
+	private class I32Check extends Check {
 		@Override
 		TypeRelation staticCheck(FieldType<?> oldType) {
 			int id = oldType.typeID;
+			// compatible with itself and i8,i16
 			if(7 <= id && id <= 9) return TypeRelation.COMPATIBLE;
+			// dynamic check needed for bigger int types i64,v64 and float types f32,f64
 			if(10 <= id && id <= 13) return TypeRelation.DYN_CHECK_NEEDED;
 			return TypeRelation.NOT_COMPATIBLE;
 		}
@@ -195,11 +271,18 @@ public class FieldCompatibilityChecker {
 
 	}
 	
-	private class LongCheck extends Check {
+	/**
+	 * Checks for cast on i64 and v64.
+	 * @author olibroe
+	 *
+	 */
+	private class I64Check extends Check {
 		@Override
 		TypeRelation staticCheck(FieldType<?> oldType) {
 			int id = oldType.typeID;
+			// compatible with i8,i16,i32,i64,v64
 			if(7 <= id && id <= 11) return TypeRelation.COMPATIBLE;
+			// needs dynamic check for float types f32 and f64
 			if(12 <= id && id <= 13) return TypeRelation.DYN_CHECK_NEEDED;
 			return TypeRelation.NOT_COMPATIBLE;
 		}
@@ -214,10 +297,16 @@ public class FieldCompatibilityChecker {
 
 	}
 	
-	private class FloatCheck extends Check {
+	/**
+	 * Checks for cast on f32.
+	 * @author olibroe
+	 *
+	 */
+	private class F32Check extends Check {
 		@Override
 		TypeRelation staticCheck(FieldType<?> oldType) {
 			int id = oldType.typeID;
+			// cast from all number types possible
 			if(7 <= id && id <= 13) return TypeRelation.COMPATIBLE;
 			return TypeRelation.NOT_COMPATIBLE;
 		}
@@ -230,25 +319,37 @@ public class FieldCompatibilityChecker {
 
 	}
 	
-	private class DoubleCheck extends Check {
+	/**
+	 * Checks for cast on f64.
+	 * @author olibroe
+	 *
+	 */
+	private class F64Check extends Check {
 		@Override
 		TypeRelation staticCheck(FieldType<?> oldType) {
 			int id = oldType.typeID;
+			// cast from all number types possible
 			if(7 <= id && id <= 13) return TypeRelation.COMPATIBLE;
 			return TypeRelation.NOT_COMPATIBLE;
 		}
 
 		@Override
 		boolean dynamicCheck(Object o) {
-			// double is biggest data type
+			// not needed
 			return true;
 		}
 
 	}
 	
+	/**
+	 * Checks for cast on String.
+	 * @author olibroe
+	 *
+	 */
 	private class StringCheck extends Check {
 		@Override
 		TypeRelation staticCheck(FieldType<?> oldType) {
+			// only string to string possible
 			if(oldType.typeID == 14) return TypeRelation.COMPATIBLE;
 			return TypeRelation.NOT_COMPATIBLE;
 		}
@@ -261,6 +362,12 @@ public class FieldCompatibilityChecker {
 
 	}
 	
+	/**
+	 * Checks for cast on Constant Length Arrays T[i].
+	 * The check needs also to check the ground type.
+	 * @author olibroe
+	 *
+	 */
 	private class ConstantLengthArrayCheck extends Check {
 		private Check groundTypeCheck;
 		private ConstantLengthArray<?> cla;
@@ -273,13 +380,19 @@ public class FieldCompatibilityChecker {
 		@Override
 		TypeRelation staticCheck(FieldType<?> oldType) {
 			int id = oldType.typeID;
+			// if the old field is also constant length array we can directly check the length and return the result
+			// for the basetypes
+			// all other single argument types (T[],list<T>,set<T>) need a dynamic check if ground types can
+			// be compatible
 			if(id == 15) {
 				if(cla.length == ((ConstantLengthArray<?>)oldType).length) {
 					return groundTypeCheck.staticCheck(((SingleArgumentType<?, ?>)oldType).groundType);
 				}
 			} else if(17 <= id && id <= 19) {
-				// for all other single argument types we need a dynamic size check, so we return downcast if groundTypes are not unrelated
-				if(groundTypeCheck.staticCheck(((SingleArgumentType<?, ?>)oldType).groundType) != TypeRelation.NOT_COMPATIBLE) return TypeRelation.DYN_CHECK_NEEDED;
+				// for all other single argument types we need a dynamic size check,
+				// so we return downcast if groundTypes are not unrelated
+				if(groundTypeCheck.staticCheck(((SingleArgumentType<?, ?>)oldType).groundType) 
+						!= TypeRelation.NOT_COMPATIBLE) return TypeRelation.DYN_CHECK_NEEDED;
 			}
 			return TypeRelation.NOT_COMPATIBLE;
 		}
@@ -287,7 +400,9 @@ public class FieldCompatibilityChecker {
 		@Override
 		boolean dynamicCheck(Object o) {
 			Collection<?> coll = (Collection<?>) o;
+			// check length
 			if(coll.size() != cla.length) return false;
+			// check objects
 			for(Object obj : coll) {
 				if(!groundTypeCheck.dynamicCheck(obj)) return false;
 			}
@@ -296,6 +411,12 @@ public class FieldCompatibilityChecker {
 
 	}
 	
+	/**
+	 * Checks for cast on Variable Length Collections T[], set<T> and list<T>.
+	 * The check needs also to check the ground type.
+	 * @author olibroe
+	 *
+	 */
 	private class VariableLengthCollectionCheck extends Check {
 		private Check groundTypeCheck;
 		
@@ -306,6 +427,7 @@ public class FieldCompatibilityChecker {
 		@Override
 		TypeRelation staticCheck(FieldType<?> oldType) {
 			int id = oldType.typeID;
+			// compatible with all other single argument types if basetypes can be compatible
 			if(15 <= id && id <= 19) {
 				return groundTypeCheck.staticCheck(((SingleArgumentType<?, ?>)oldType).groundType);
 			}
@@ -315,6 +437,7 @@ public class FieldCompatibilityChecker {
 		@Override
 		boolean dynamicCheck(Object o) {
 			Collection<?> coll = (Collection<?>) o;
+			// check objects in collection
 			for(Object obj : coll) {
 				if(!groundTypeCheck.dynamicCheck(obj)) return false;
 			}
@@ -323,6 +446,11 @@ public class FieldCompatibilityChecker {
 
 	}
 	
+	/**
+	 * Checks for cast on map.
+	 * @author olibroe
+	 *
+	 */
 	private class MapCheck extends Check {
 		private Check keyTypeCheck;
 		private Check valueTypeCheck;
@@ -334,8 +462,10 @@ public class FieldCompatibilityChecker {
 		
 		@Override
 		TypeRelation staticCheck(FieldType<?> oldType) {
+			// only compatible with itself
 			if(oldType.typeID != 20) return TypeRelation.NOT_COMPATIBLE;
 			
+			// check key and value types; nested maps are checked recursively
 			TypeRelation keyRel = keyTypeCheck.staticCheck(((MapType<?,?>)oldType).keyType);
 			TypeRelation valueRel = valueTypeCheck.staticCheck(((MapType<?,?>)oldType).valueType);
 
@@ -357,6 +487,11 @@ public class FieldCompatibilityChecker {
 
 	}
 	
+	/**
+	 * Checks for cast on usertype.
+	 * @author olibroe
+	 *
+	 */
 	private class UsertypeCheck extends Check {
 		private FieldType<?> newType;
 		
@@ -366,6 +501,7 @@ public class FieldCompatibilityChecker {
 		
 		@Override
 		TypeRelation staticCheck(FieldType<?> oldType) {
+			// only compatible with annotation or usertype
 			if(oldType.typeID == 5) return TypeRelation.DYN_CHECK_NEEDED;
 			if(oldType.typeID < 32) return TypeRelation.NOT_COMPATIBLE;
 			

@@ -71,10 +71,18 @@ import de.ust.skill.ir.restriction.StringDefaultRestriction;
 import de.ust.skill.ir.restriction.UniqueRestriction;
 import de.ust.skill.manipulator.internal.SkillState;
 
+/**
+ * Create a Skillstate for a given TypeContext.
+ * 
+ * @author olibroe
+ *
+ */
 public class StateCreator {
-
-	private Annotation annotation;
+	
 	private SkillState newState;
+	
+	// variables neeeded for state creation
+	private Annotation annotation;
 	private StringPool strings;
 	private HashMap<String,StoragePool<?,?>> poolByName;
 
@@ -82,6 +90,13 @@ public class StateCreator {
 		return new StateCreator(tc, targetPath).newState;
 	}
 	
+	/**
+	 * Create the new state at targetPath.
+	 * 
+	 * @param tc - Specification for the typesystem
+	 * @param targetPath - path where state should be created
+	 * @throws IOException - thrown if state could not be created at tragetPath
+	 */
 	@SuppressWarnings("unchecked")
 	private <B extends SkillObject, T extends B> StateCreator(TypeContext tc, Path targetPath) throws IOException {
 		// create state arguments
@@ -109,6 +124,7 @@ public class StateCreator {
 			else
 				newPool = (StoragePool<T, B>) superPool.makeSubPool(types.size(), utype.getSkillName());
 
+			// create all type restriction for the type and add them
 			TypeRestriction tr;
 			for(Restriction r : utype.getRestrictions()) {
 				tr = createTypeRestriction(r);
@@ -139,7 +155,10 @@ public class StateCreator {
 		// create fields of types
 		// have to run over UserTypes a second time because types have to be known to create fields
 		for(UserType utype : tc.getUsertypes()) {
+			// get pool
 			currentPool = poolByName.get(utype.getSkillName());
+			
+			// loop over field definitions and create fields
 			for(Field f : utype.getFields()) {
 				if(!f.isAuto()) {
 					// get right field type
@@ -151,6 +170,7 @@ public class StateCreator {
 					if(fType != null) {
 						newField = currentPool.addField(fType, f.getSkillName());
 						
+						// create field restrictions for the field
 						for(Restriction r : f.getRestrictions()) {
 							fr = createFieldRestriction(r, newField);
 							if(fr != null) {
@@ -166,17 +186,29 @@ public class StateCreator {
 		}
 	}
 	
+	/**
+	 * Create the state representation of the field restriction from the given type context representation.
+	 * 
+	 * @param r - type context representation of field restriction
+	 * @param newField - field for which the restriction should be created
+	 * @return state representation of field restriction
+	 */
 	@SuppressWarnings("unchecked")
 	private FieldRestriction<?> createFieldRestriction(Restriction r, FieldDeclaration<?,?> newField) {
+		// RANGE
 		if(r instanceof IntRangeRestriction) {
 			return Range.make(newField.type().typeID, ((IntRangeRestriction)r).getLow(), ((IntRangeRestriction)r).getHigh());
 		}
 		if(r instanceof FloatRangeRestriction) {
 			return Range.make(newField.type().typeID, ((FloatRangeRestriction)r).getLowDouble(), ((FloatRangeRestriction)r).getHighDouble());
 		}
+		
+		// NON NULL
 		if(r instanceof NonNullRestriction) {
 			return NonNull.get();
 		}
+		
+		// DEFAULT
 		if(r instanceof FloatDefaultRestriction) {
 			switch(newField.type().typeID) {
 			case 12:
@@ -205,40 +237,72 @@ public class StateCreator {
 			if(((NameDefaultRestriction)r).getValue().isEmpty()) return null;
 			return DefaultValue.makeFieldRestriction(((NameDefaultRestriction)r).getValue().get(0).getSkillName(), poolByName);
 		}
+		
+		// CODING
 		if(r instanceof CodingRestriction) {
 			return new Coding<>(((CodingRestriction)r).getValue(), strings);
 		}
+		
+		// CONSTANT LENGTH POINTER
 		if(r instanceof ConstantLengthPointerRestriction) {
 			return ConstantLengthPointer.get();
 		}
+		
+		// ONE OF
 		if(r instanceof OneOfRestriction) {
 			ArrayList<StoragePool<?,?>> oneOfTypes = new ArrayList<>();
 			for(Name n : ((OneOfRestriction)r).getOneOfNames()) oneOfTypes.add(poolByName.get(n.getSkillName()));
 			return new OneOf<SkillObject>(oneOfTypes);
 		}
+		
+		// should never reach this
 		return null;
 	}
 
+	/**
+	 * Create the state representation of the type restriction from the given type context representation.
+	 * 
+	 * @param r - type context representation of type restriction
+	 * @return state representation of type restriction
+	 */
 	private TypeRestriction createTypeRestriction(Restriction r) {
+		// SINGLETON
 		if(r instanceof SingletonRestriction) {
 			return Singleton.get();
 		}
+		
+		// UNIQUE
 		if(r instanceof UniqueRestriction) {
 			return Unique.get();
 		}
+		
+		// MONOTONE
 		if(r instanceof MonotoneRestriction) {
 			return Monotone.get();
 		}
+		
+		// ABSTRACT
 		if(r instanceof AbstractRestriction) {
 			return Abstract.get();
 		}
+		
+		// DEFAULT
 		if(r instanceof NameDefaultRestriction) {
 			if(((NameDefaultRestriction)r).getValue().isEmpty()) return null;
 			return DefaultValue.makeTypeRestriction(((NameDefaultRestriction)r).getValue().get(0).getSkillName(), poolByName);
 		}
+		
+		// should never reach this
 		return null;		
 	}
 
+	/**
+	 * Get the state representation for a constant type from the type context representation.
+	 * 
+	 * @param type - type context representation of a constant type
+	 * @param value - constant value
+	 * @return state representation of constant type
+	 */
 	private FieldType<?> getConstantType(Type type, long value) {
 		switch (type.getSkillName()) {
 		case "i8":
@@ -252,11 +316,18 @@ public class StateCreator {
 		case "v64":
 			return new ConstantV64(value);
 		default:
+			// should never reach this
 			return null;
 		}
 		
 	}
 
+	/**
+	 * Get the state representation for a type from the type context representation.
+	 * 
+	 * @param type - type context representation of a type
+	 * @return state representation of type
+	 */
 	private FieldType<?> getFieldType(Type type) {
 		if(type instanceof GroundType) {
 			switch (type.getSkillName()) {
@@ -300,6 +371,7 @@ public class StateCreator {
 		} else if(type instanceof UserType) {
 			return newState.pool(type.getSkillName());
 		}
+		// should never reach this
 		return null;
 	}
 }

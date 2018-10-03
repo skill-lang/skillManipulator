@@ -2,6 +2,12 @@ package de.ust.skill.manipulator.specificationMapping.messages;
 
 import de.ust.skill.common.java.internal.FieldDeclaration;
 
+/**
+ * Information for the user that two mapped fields produce a message.
+ * 
+ * @author olibroe
+ *
+ */
 public class FieldMappingInformation extends MappingInformation {
 	public final FieldDeclaration<?, ?> oldField;
 	public final FieldDeclaration<?, ?> newField;

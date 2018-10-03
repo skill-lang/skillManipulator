@@ -4,6 +4,12 @@ import java.util.Comparator;
 
 import de.ust.skill.common.java.internal.SkillObject;
 
+/**
+ * This class is the abstract base of a Comparator for Skill Objects.
+ * 
+ * @author olibroe
+ *
+ */
 public abstract class SkillObjectComparator implements Comparator<SkillObject>{
 	
 	@Override

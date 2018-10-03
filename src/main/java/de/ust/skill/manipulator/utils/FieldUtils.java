@@ -61,18 +61,16 @@ public final class FieldUtils {
 
 	/**
 	 * This method deletes the field with the given fieldname of the given type.
-	 * If the field is not found in the given type the method returns false. The return
-	 * value is true if the removal was successful.
 	 *
 	 * @param fieldname - name of the field to remove
 	 * @param type - type in which the field is located
-	 * @return - true if successful, otherwise false
 	 */
 	public static void removeField(String fieldname, StoragePool<?, ?> type) {
 		boolean foundField = false;
 		Iterator<?> it = type.dataFields.iterator();
 		while(it.hasNext()) {
 			FieldDeclaration<?, ?> f = (FieldDeclaration<?,?>) it.next();
+			// remove field if found and decrement the indices of all following fields
 			if(f.name().equals(fieldname)) {
 				it.remove();
 				foundField = true;
@@ -82,6 +80,9 @@ public final class FieldUtils {
 		}
 
 		if(foundField) return;
+		
+		// Inform the user that the field is not found in the given type.
+		// But maybe it could be found in one of the supertypes.
 		OutputPrinter.println("Field " + fieldname + " not found in type " + type.name());
 		FieldIterator fit = type.allFields();
 		while(fit.hasNext()) {
@@ -108,6 +109,9 @@ public final class FieldUtils {
 			
 			while(it.hasNext()) {
 				FieldDeclaration<?, ?> f = (FieldDeclaration<?,?>) it.next();
+				
+				// Remove all fields of given type and decrement all following files by the number of removed types
+				// so far.
 				if(fieldContainsType(typeID, f.type())) {
 					it.remove();
 					deletedFields += 1;

@@ -3,6 +3,12 @@ package de.ust.skill.manipulator.specificationMapping.messages;
 import de.ust.skill.common.java.internal.FieldDeclaration;
 import de.ust.skill.common.java.internal.StoragePool;
 
+/**
+ * Information for the user that two fields are incompatible.
+ * 
+ * @author olibroe
+ *
+ */
 public class FieldIncompatibleInformation extends MappingInformation {
 	public final FieldDeclaration<?, ?> oldField;
 	public final FieldDeclaration<?, ?> newField;

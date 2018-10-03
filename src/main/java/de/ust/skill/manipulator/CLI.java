@@ -1,6 +1,7 @@
 package de.ust.skill.manipulator;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -49,7 +50,6 @@ public class CLI {
 
 		if(line.hasOption("o")) outpath = Paths.get(line.getOptionValue("o"));
 		
-		OutputPrinter.disableOutput();
 		if(line.hasOption("silent")) OutputPrinter.disableOutput();
 
 		// execute chosen mode
@@ -119,6 +119,9 @@ public class CLI {
 			} else {
 				newSf = mapper.map(tc, sf, outpath);
 			}
+		} catch (FileNotFoundException e) {
+			System.out.println("Mapping file not found");
+			return;
 		} catch (IOException e) {
 			System.out.println("Error while creating new Skillfile.");
 			return;

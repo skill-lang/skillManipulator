@@ -22,6 +22,8 @@ import de.ust.skill.manipulator.OutputPrinter;
  *
  * @author Timm Felden
  * @note type access fields start with a capital letter to avoid collisions
+ * 
+ * @modified by Oliver Brösamle
  */
 public final class SkillState extends de.ust.skill.common.java.internal.SkillState implements SkillFile {
 
@@ -80,10 +82,18 @@ public final class SkillState extends de.ust.skill.common.java.internal.SkillSta
         finalizePools(in);
     }
 
+    /**
+     * 
+     * @return StoragePools in type order
+     */
 	public ArrayList<StoragePool<?, ?>> getTypes() {
 		return this.types;
 	}
 	
+	/**
+	 * Print the state on the command line.
+	 * 
+	 */
 	public void prettyPrint() {
 		StringBuilder sb = new StringBuilder();
 		for(StoragePool<?, ?> pool : types) {
