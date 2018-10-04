@@ -9,6 +9,12 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
+/**
+ * Common test implementation for all type and field remove tests.
+ * 
+ * @author olibroe
+ *
+ */
 public abstract class CommonRemoveTest extends CommonTest {
 	protected abstract class RemoveTestDefinition {
 		private String testname;
@@ -24,6 +30,12 @@ public abstract class CommonRemoveTest extends CommonTest {
 		}
 	}
 	
+	/**
+	 * Define type remove test.
+	 * 
+	 * @author olibroe
+	 *
+	 */
 	protected class RemoveTypeTestDefinition extends RemoveTestDefinition {
 		public RemoveTypeTestDefinition(String testname, String file, String expectedFile, String typename) {
 			super(testname, file, expectedFile, typename);
@@ -31,6 +43,12 @@ public abstract class CommonRemoveTest extends CommonTest {
 		
 	}
 	
+	/**
+	 * Define field remove test.
+	 * 
+	 * @author olibroe
+	 *
+	 */
 	protected class RemoveFieldTestDefinition extends RemoveTestDefinition {
 		private String fieldname;
 		
@@ -43,6 +61,12 @@ public abstract class CommonRemoveTest extends CommonTest {
 	
 	protected List<RemoveTestDefinition> removeTestDefinitions = new ArrayList<>();
 	
+	/**
+	 * Execute defined tests.
+	 * 
+	 * @return
+	 * @throws Exception
+	 */
 	@TestFactory
     Stream<DynamicTest> dynamicTests() throws Exception {
 		return removeTestDefinitions.stream()

@@ -25,6 +25,12 @@ import de.ust.skill.manipulator.specificationMapping.messages.FieldIncompatibleI
 import de.ust.skill.manipulator.specificationMapping.messages.MappingInformation;
 import de.ust.skill.parser.Parser;
 
+/**
+ * Common implementation for all specification mapping tests.
+ * 
+ * @author olibroe
+ *
+ */
 public abstract class CommonSpecificationMappingTest extends CommonTest {
 	protected final String sourceFolder;
 	protected final String startfile;

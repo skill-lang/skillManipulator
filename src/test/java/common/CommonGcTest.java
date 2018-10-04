@@ -9,7 +9,19 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 
+/**
+ * Common test implementation for all GC-tests.
+ * 
+ * @author olibroe
+ *
+ */
 public abstract class CommonGcTest extends CommonTest {
+	/**
+	 * Define a test case with this class.
+	 * 
+	 * @author olibroe
+	 *
+	 */
 	protected class GcTestDefinition {
 		private String testname;
 		private String file;
@@ -36,6 +48,12 @@ public abstract class CommonGcTest extends CommonTest {
 	
 	protected List<GcTestDefinition> gcTestDefinitions = new ArrayList<>();
 	
+	/**
+	 * Execute defined test cases.
+	 * 
+	 * @return
+	 * @throws Exception
+	 */
 	@TestFactory
     Stream<DynamicTest> dynamicTests() throws Exception {
 		return gcTestDefinitions.stream()

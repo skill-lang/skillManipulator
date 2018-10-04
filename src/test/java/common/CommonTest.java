@@ -10,13 +10,18 @@ import java.util.List;
 import de.ust.skill.manipulator.CLI;
 import de.ust.skill.manipulator.internal.SkillFile;
 
+/**
+ * Common implementation for all tests.
+ * 
+ * @author olibroe
+ *
+ */
 public abstract class CommonTest {
 	protected static final boolean CLI_TEST = true;
 
 	protected static Path tmpFile(String string) throws Exception {
 		File r = File.createTempFile(string, ".sf");
-		// TODO
-		// r.deleteOnExit();
+		r.deleteOnExit();
 		return r.toPath();
 	}
 
@@ -32,6 +37,14 @@ public abstract class CommonTest {
 		return sb.toString();
 	}
 
+	/**
+	 * Execute test by calling Command Line interface.
+	 * 
+	 * @param filename - input file name
+	 * @param expectedFilename - filename of expected result file
+	 * @param specialArgs - command line arguments for test execution
+	 * @throws Exception
+	 */
 	protected static void executeCliTest(String filename, String expectedFilename, List<String> specialArgs)
 			throws Exception {
 		

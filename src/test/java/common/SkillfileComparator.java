@@ -20,19 +20,34 @@ import de.ust.skill.common.java.restrictions.TypeRestriction;
 import de.ust.skill.manipulator.internal.SkillFile;
 import de.ust.skill.manipulator.internal.SkillState;
 
+/**
+ * Compare Skillfiles for structural equality.
+ * 
+ * @author olibroe
+ *
+ */
 public class SkillfileComparator {
 
 	public static void compareSkillFiles(SkillFile sfExpected, SkillFile sfActual) {
 		SkillState expectedState = (SkillState) sfExpected;
 		SkillState actualState = (SkillState) sfActual;
 		
+		// compare typesystem
 		compareTypes(expectedState, actualState);
 		
+		// compare objects and their field values
 		compareSkillObjects(expectedState, actualState);
 		
+		// compare strings
 		compareStringPools(expectedState, actualState);
 	}
 
+	/**
+	 * Run through all fields of old and new typesystem and compare the value of every type.
+	 * 
+	 * @param expectedState
+	 * @param actualState
+	 */
 	private static void compareSkillObjects(SkillState expectedState, SkillState actualState) {	
 		ArrayList<StoragePool<?, ?>> expectedTypes = expectedState.getTypes();
 		ArrayList<StoragePool<?, ?>> actualTypes = actualState.getTypes();
@@ -67,6 +82,14 @@ public class SkillfileComparator {
 		}
 	}
 
+	/**
+	 * Checks if given objects are equal.
+	 * We need a method here, because the data types have different definitions of equality.
+	 * 
+	 * @param dataExpected
+	 * @param dataActual
+	 * @return
+	 */
 	private static boolean objectsEqual(Object dataExpected, Object dataActual) {
 		if(null == dataExpected && null == dataActual) return true;
 
@@ -109,6 +132,12 @@ public class SkillfileComparator {
 		
 	}
 
+	/**
+	 * Compare types of the typesystem.
+	 * 
+	 * @param stateExpected
+	 * @param stateActual
+	 */
 	private static void compareTypes(SkillState stateExpected, SkillState stateActual) {
 		ArrayList<StoragePool<?,?>> typesExpected = stateExpected.getTypes();
 		ArrayList<StoragePool<?,?>> typesActual = stateActual.getTypes();
@@ -126,6 +155,12 @@ public class SkillfileComparator {
 		
 	}
 
+	/**
+	 * Compare type restrictions.
+	 * 
+	 * @param expectedType
+	 * @param actualType
+	 */
 	private static void compareTypeRestrictions(StoragePool<?, ?> expectedType, StoragePool<?, ?> actualType) {
 		boolean found;
 		for(TypeRestriction expRest : expectedType.restrictions) {
@@ -138,6 +173,12 @@ public class SkillfileComparator {
 		Assertions.assertEquals(expectedType.restrictions.size(), actualType.restrictions.size());
 	}
 
+	/**
+	 * Compare fields.
+	 * 
+	 * @param expFieldsIt
+	 * @param actFieldsIt
+	 */
 	private static void compareFields(FieldIterator expFieldsIt, FieldIterator actFieldsIt) {
 		while(expFieldsIt.hasNext()) {
 			Assertions.assertTrue(actFieldsIt.hasNext());
@@ -152,6 +193,12 @@ public class SkillfileComparator {
 		Assertions.assertFalse(actFieldsIt.hasNext(), "Type has too much fields");
 	}
 
+	/**
+	 * Compare field restrictions.
+	 * 
+	 * @param expField
+	 * @param actField
+	 */
 	private static void compareFieldRestrictions(FieldDeclaration<?, ?> expField, FieldDeclaration<?, ?> actField) {
 		boolean found;
 		for(FieldRestriction<?> expRest : expField.restrictions) {
@@ -164,6 +211,12 @@ public class SkillfileComparator {
 		Assertions.assertEquals(expField.restrictions.size(), actField.restrictions.size());
 	}
 
+	/**
+	 * Compare the strings of both states.
+	 * 
+	 * @param stateExpected
+	 * @param stateActual
+	 */
 	private static void compareStringPools(SkillState stateExpected, SkillState stateActual) {
 		stateExpected.collectStrings();
 		stateActual.collectStrings();
