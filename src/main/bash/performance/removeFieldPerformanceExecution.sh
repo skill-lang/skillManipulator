@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# 313 types
-FILES="/media/olibroe/DATA/Ubuntu_Data/imlfiles/*.sf"
+# provide directory here in form /path/to/directory/*.sf
+FILES=""
 
 EXECUTIONS=10
 COUNTER="java -Xmx12g -Xms12g -XX:MaxHeapFreeRatio=100 -jar NodeCounter.jar"
