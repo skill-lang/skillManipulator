@@ -17,6 +17,11 @@ import de.ust.skill.manipulator.orderRelation.SkillObjectSorter;
 
 class TestFramework extends CommonTest {
 
+	/**
+	 * Test sorting with nodeid comparator.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	void testFixedComparator() throws Exception {
 		Path path = tmpFile("fixedComparator");
@@ -35,6 +40,12 @@ class TestFramework extends CommonTest {
 		
 	}
 	
+	/**
+	 * Same test as with nodeid comparator, but in this case the field has to be given in the constructor of
+	 * the comparator.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	void testVariableComparator() throws Exception {
 		Path path = tmpFile("variableComparator");
@@ -58,6 +69,11 @@ class TestFramework extends CommonTest {
 		
 	}
 	
+	/**
+	 * Same test as the two above, but now the comparator is put in a map.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	void testMapSingleComparator() throws Exception {
 		Path path = tmpFile("mapComparator");
@@ -83,6 +99,11 @@ class TestFramework extends CommonTest {
 		
 	}
 	
+	/**
+	 * Test the SkillIdComparator.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	void testSkillIdComparator() throws Exception {
 		Path path = tmpFile("skillIdComparator");
@@ -106,6 +127,11 @@ class TestFramework extends CommonTest {
 		
 	}
 	
+	/**
+	 * Test multiple comparators in the map.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	void testMultipleComparator() throws Exception {
 		Path path = tmpFile("multipleComparator");

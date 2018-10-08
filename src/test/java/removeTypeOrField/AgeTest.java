@@ -6,6 +6,9 @@ class AgeTest extends CommonRemoveTest{
 	private static final String folder = "src/test/resources/age/";
 	private static final String startfile = folder + "age-example.sf";
 	
+	/**
+	 * Define test cases in constructor.
+	 */
 	AgeTest() {
 		removeTestDefinitions.add(new RemoveFieldTestDefinition("test_RemoveFieldAge", startfile,
 				folder + "age-example-without-field.sf", "age", "age"));

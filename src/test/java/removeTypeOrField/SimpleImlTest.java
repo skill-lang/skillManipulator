@@ -6,6 +6,9 @@ class SimpleImlTest extends CommonRemoveTest{
 	private static final String folder = "src/test/resources/simpleIml/";
 	private static final String startfile = folder + "simple.iml.sf";
 	
+	/**
+	 * Define test cases in constructor.
+	 */
 	SimpleImlTest() {
 		removeTestDefinitions.add(new RemoveFieldTestDefinition("test_RemoveFieldNameOfIdentifier", startfile,
 				folder + "simpleIml-removed-name-of-identifier.sf", "identifier", "name"));

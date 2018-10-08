@@ -28,6 +28,12 @@ import de.ust.skill.manipulator.internal.SkillState;
  */
 public class SkillfileComparator {
 
+	/**
+	 * Compare the two given Skillfiles for structural equality.
+	 * 
+	 * @param sfExpected
+	 * @param sfActual
+	 */
 	public static void compareSkillFiles(SkillFile sfExpected, SkillFile sfActual) {
 		SkillState expectedState = (SkillState) sfExpected;
 		SkillState actualState = (SkillState) sfActual;
@@ -52,27 +58,34 @@ public class SkillfileComparator {
 		ArrayList<StoragePool<?, ?>> expectedTypes = expectedState.getTypes();
 		ArrayList<StoragePool<?, ?>> actualTypes = actualState.getTypes();
 		
+		// loop over types
 		for(int i = 0; i < expectedTypes.size(); i++) {
 			StoragePool<?, ?> expectedType = expectedTypes.get(i);
 			StoragePool<?, ?> actualType = actualTypes.get(i);
 			
+			// loop over fields
 			StaticFieldIterator fitExpected = expectedType.fields();
 			StaticFieldIterator fitActual = actualType.fields();
 			while(fitExpected.hasNext()) {
 				FieldDeclaration<?, ?> fieldExp = fitExpected.next();
 				FieldDeclaration<?, ?> fieldAct = fitActual.next();
 				
+				// loop over objects
 				Iterator<? extends SkillObject> expectedObjectsIt = expectedType.iterator();
 				Iterator<? extends SkillObject> actualObjectsIt = actualType.iterator();
 				while(expectedObjectsIt.hasNext()) {
 					SkillObject expObj = expectedObjectsIt.next();
 					Assertions.assertTrue(actualObjectsIt.hasNext(), "Actual SkillFile misses " + expObj);	
 					SkillObject actObj = actualObjectsIt.next();
+					// compare object names
 					Assertions.assertEquals(expObj.skillName(), actObj.skillName());
 					
 					if(!expObj.isDeleted() && !actObj.isDeleted()) {
+						// get field values
 						Object dataExpected = fieldExp.get(expObj);
 						Object dataActual = fieldAct.get(actObj);
+						
+						// compare field values for equality
 						if(!objectsEqual(dataExpected, dataActual)) {
 							fail("SkillObjects " + expObj + " and " + actObj + " differ in field " + fieldExp + " (" + dataExpected + "; " + dataActual + ")");
 						}
@@ -96,13 +109,16 @@ public class SkillfileComparator {
 		if(null == dataExpected && dataActual instanceof SkillObject && ((SkillObject)dataActual).isDeleted()) {
 			return true;
 		}
-		
+
 		if(null == dataExpected ^ null == dataActual) return false;
 		
+		// all ground types except annotation are instances of comparable
 		if(dataExpected instanceof Comparable<?>) {
 			return dataExpected.equals(dataActual);
+		// Skillobjects are compared by name
 		} else if(dataExpected instanceof SkillObject) {
 			return dataExpected.toString().equals(dataActual.toString());
+		// iterables
 		} else if(dataExpected instanceof Iterable<?>) {
 			Iterator<?> dataActIt = ((Iterable<?>)dataActual).iterator();
 			while(dataActIt.hasNext()) {
@@ -114,6 +130,7 @@ public class SkillfileComparator {
 				if(!objFound) return false;
 			}
 			return true;
+		// comparison of maps
 		} else if(dataExpected instanceof Map<?, ?>) {			
 			for(Entry<?, ?> entryExp : ((Map<?, ?>) dataExpected).entrySet()) {
 				boolean objFound = false;
@@ -126,6 +143,7 @@ public class SkillfileComparator {
 			}
 			return true;
 		} else {
+			// this should not happen
 			System.out.println(dataExpected);
 		}
 		return false;
@@ -142,29 +160,40 @@ public class SkillfileComparator {
 		ArrayList<StoragePool<?,?>> typesExpected = stateExpected.getTypes();
 		ArrayList<StoragePool<?,?>> typesActual = stateActual.getTypes();
 		
+		// check number of types
 		Assertions.assertEquals(typesExpected.size(), typesActual.size());
+		
+		// loop over types
 		for(int i = 0; i < typesExpected.size(); i++) {
 			StoragePool<?, ?> expectedType = typesExpected.get(i);
 			StoragePool<?, ?> actualType = typesActual.get(i);
+			
+			// compare name, typeID and object number
 			Assertions.assertEquals(expectedType.typeID, actualType.typeID);
 			Assertions.assertEquals(expectedType.name(), actualType.name());
 			Assertions.assertEquals(expectedType.size(), actualType.size());
+			
+			// compare type restrictions
 			compareTypeRestrictions(expectedType, actualType);
+			// compare field definitions
 			compareFields(expectedType.allFields(), actualType.allFields());
 		}
 		
 	}
 
 	/**
-	 * Compare type restrictions.
+	 * Compare type restrictions. Order of restrictions is not defined.
+	 * Implementation is not efficient, but we do not expect huge amount of restrictions.
 	 * 
 	 * @param expectedType
 	 * @param actualType
 	 */
 	private static void compareTypeRestrictions(StoragePool<?, ?> expectedType, StoragePool<?, ?> actualType) {
 		boolean found;
+		// loop over expected restrictions
 		for(TypeRestriction expRest : expectedType.restrictions) {
 			found = false;
+			// search expected restriction in actual restrictions
 			for(TypeRestriction actRest : actualType.restrictions) {
 				if(expRest.equals(actRest)) found = true;
 			}
@@ -180,29 +209,33 @@ public class SkillfileComparator {
 	 * @param actFieldsIt
 	 */
 	private static void compareFields(FieldIterator expFieldsIt, FieldIterator actFieldsIt) {
+		// loop over fields
 		while(expFieldsIt.hasNext()) {
 			Assertions.assertTrue(actFieldsIt.hasNext());
 			FieldDeclaration<?, ?> expField = expFieldsIt.next();
 			FieldDeclaration<?, ?> actField = actFieldsIt.next();
+			
+			// FieldDeclaration defines a equals method
 			Assertions.assertEquals(expField, actField);
+			// compare field restrictions
 			compareFieldRestrictions(expField, actField);
-		}
-		if(actFieldsIt.hasNext()) {
-			System.out.println(actFieldsIt.next());
 		}
 		Assertions.assertFalse(actFieldsIt.hasNext(), "Type has too much fields");
 	}
 
 	/**
 	 * Compare field restrictions.
+	 * Not efficient, but we do not expect a big amount of restrictions.
 	 * 
 	 * @param expField
 	 * @param actField
 	 */
 	private static void compareFieldRestrictions(FieldDeclaration<?, ?> expField, FieldDeclaration<?, ?> actField) {
 		boolean found;
+		// loop over expected restrictions
 		for(FieldRestriction<?> expRest : expField.restrictions) {
 			found = false;
+			// search expected restriction in actual restrictions
 			for(FieldRestriction<?> actRest : actField.restrictions) {
 				if(expRest.equals(actRest)) found = true;
 			}
@@ -218,10 +251,14 @@ public class SkillfileComparator {
 	 * @param stateActual
 	 */
 	private static void compareStringPools(SkillState stateExpected, SkillState stateActual) {
+		// make sure that all strings are loaded
 		stateExpected.collectStrings();
 		stateActual.collectStrings();
+		
 		StringAccess expectedStrings = stateExpected.Strings();
 		StringAccess actualStrings = stateActual.Strings();
+		
+		// compare first the size and then all strings for equality
 		Assertions.assertEquals(expectedStrings.size(), actualStrings.size());
 		for(String s : expectedStrings) {
 			Assertions.assertTrue(actualStrings.contains(s), "String " + s + " not found");

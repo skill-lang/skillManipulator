@@ -6,6 +6,9 @@ class SimpleImlTest extends CommonGcTest{
 	private final static String folder = "src/test/resources/simpleIml/";
 	private final static String startFile = folder + "simple.iml.sf";
 	
+	/**
+	 * Define test cases in constructor.
+	 */
 	protected SimpleImlTest() {
 		gcTestDefinitions.add(new GcTestDefinition("test_RootImlgraph", startFile,
 				folder + "simple.iml.gc.sf", "imlgraph"));

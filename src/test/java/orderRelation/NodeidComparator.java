@@ -7,6 +7,12 @@ import de.ust.skill.manipulator.internal.SkillFile;
 import de.ust.skill.manipulator.internal.SkillState;
 import de.ust.skill.manipulator.orderRelation.SkillObjectComparator;
 
+/**
+ * SkillObjectComparator that sorts the SkillObjects after the field nodeid of type storable.
+ * 
+ * @author olibroe
+ *
+ */
 public class NodeidComparator extends SkillObjectComparator{
 	private FieldDeclaration<?, ?> nodeidField = null;
 	
@@ -27,6 +33,8 @@ public class NodeidComparator extends SkillObjectComparator{
 		Long value1 = (Long) nodeidField.get(o1);
 		Long value2 = (Long) nodeidField.get(o2);
 		
+		// both skillobjects are from the same type, due to implementation of the sorting algorithm
+		// so either are both null or they have both values
 		if(value1 == null && value2 == null) return 0;
 		
 		return value1.compareTo(value2);

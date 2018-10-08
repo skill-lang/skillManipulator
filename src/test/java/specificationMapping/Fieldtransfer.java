@@ -13,10 +13,18 @@ class Fieldtransfer extends CommonSpecificationMappingTest {
 	private static final String FOLDER = "src/test/resources/specificationMapper/fieldtransfer/";
 	private static final String STARTFILE = FOLDER + "specification.sf";
 
+	/**
+	 * Define test cases in constructor.
+	 */
 	protected Fieldtransfer() {
 		super(FOLDER, STARTFILE);
 	}
 	
+	/**
+	 * Additional test with a lot of failing casts.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	public void failingCasts() throws Exception {
 		SpecificationMapper mapper = executeMapping(STARTFILE, FOLDER + "failingCastsTest.skill");

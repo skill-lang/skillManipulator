@@ -6,6 +6,9 @@ class AgeTest extends CommonGcTest{
 	private final static String folder = "src/test/resources/age/";
 	private final static String startFile = folder + "age-example.sf";
 	
+	/**
+	 * Define test cases in constructor.
+	 */
 	protected AgeTest() {
 		gcTestDefinitions.add(new GcTestDefinition("test_RootAge", startFile, startFile, "age"));
 		gcTestDefinitions.add(new GcTestDefinition("test_RootAge1_Age2", startFile, startFile, "age#1,age#2"));

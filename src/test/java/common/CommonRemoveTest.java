@@ -16,6 +16,17 @@ import org.junit.jupiter.api.TestFactory;
  *
  */
 public abstract class CommonRemoveTest extends CommonTest {
+	/**
+	 * Abstract definition of a remove test case.
+	 * Always needed:
+	 *  - testname
+	 *  - file to execute the remove on
+	 *  - expected file
+	 *  - typename: the type that is either removed or from which a field is removed
+	 * 
+	 * @author olibroe
+	 *
+	 */
 	protected abstract class RemoveTestDefinition {
 		private String testname;
 		private String file;
@@ -59,10 +70,12 @@ public abstract class CommonRemoveTest extends CommonTest {
 		}
 	}
 	
+	// holds test definitions
 	protected List<RemoveTestDefinition> removeTestDefinitions = new ArrayList<>();
 	
 	/**
 	 * Execute defined tests.
+	 * Only the arguments needed for field/type removal are set here, all others are set in executeCliTest(...).
 	 * 
 	 * @return
 	 * @throws Exception

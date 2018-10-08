@@ -15,10 +15,19 @@ class ReadMappingFile extends CommonSpecificationMappingTest {
 
 	private static final String FOLDER = "src/test/resources/specificationMapper/mappingFiles/";
 
+	/**
+	 * Define test cases in constructor.
+	 */
 	protected ReadMappingFile() {
 		super(FOLDER, FOLDER + "../typesystem/subtypes.sf");
 	}
 
+	/**
+	 * Simple read test for the Mapping file parser.
+	 * 
+	 * @throws ParseException
+	 * @throws FileNotFoundException
+	 */
 	@Test
 	void testReadSimple() throws ParseException, FileNotFoundException {
 		String file = "src/test/resources/specificationMapper/mappingFiles/simple.map";
@@ -41,6 +50,12 @@ class ReadMappingFile extends CommonSpecificationMappingTest {
 		Assertions.assertEquals("gamma", t3.getFieldMapping("delta"));
 	}
 	
+	/**
+	 * Duplicate mapping test. Last one should be saved.
+	 * 
+	 * @throws ParseException
+	 * @throws FileNotFoundException
+	 */
 	@Test
 	void testReadDuplicateMapping() throws ParseException, FileNotFoundException {
 		String file = "src/test/resources/specificationMapper/mappingFiles/duplicateMappings.map";
@@ -57,6 +72,12 @@ class ReadMappingFile extends CommonSpecificationMappingTest {
 		Assertions.assertEquals("h2", t2.getFieldMapping("h"));
 	}
 	
+	/**
+	 * Test unicode reading.
+	 * 
+	 * @throws ParseException
+	 * @throws FileNotFoundException
+	 */
 	@Test
 	void testReadUnicode() throws ParseException, FileNotFoundException {
 		String file = "src/test/resources/specificationMapper/mappingFiles/unicodeChars.map";

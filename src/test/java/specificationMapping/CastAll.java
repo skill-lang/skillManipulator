@@ -13,10 +13,18 @@ class CastAll extends CommonSpecificationMappingTest {
 	private static final String FOLDER = "src/test/resources/specificationMapper/castAll/";
 	private static final String STARTFILE = FOLDER + "specification.sf";
 
+	/**
+	 * Define test cases in constructor.
+	 */
 	protected CastAll() {
 		super(FOLDER, STARTFILE);
 	}
 	
+	/**
+	 * Annotation field type check fails.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	public void annotationCastFail() throws Exception {
 		SpecificationMapper mapper = executeMapping(STARTFILE, FOLDER + "annotationCastFail.skill");
@@ -27,6 +35,11 @@ class CastAll extends CommonSpecificationMappingTest {
 		compareFailingFields(mapper, expectedFailFields);
 	}
 	
+	/**
+	 * Six container casts fail.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	public void containerCastFail() throws Exception {
 		SpecificationMapper mapper = executeMapping(STARTFILE, FOLDER + "containerCastFail.skill");
@@ -42,6 +55,11 @@ class CastAll extends CommonSpecificationMappingTest {
 		compareFailingFields(mapper, expectedFailFields);
 	}
 	
+	/**
+	 * Five container casts fail in dynamic check.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	public void containerDynamicCheckFail() throws Exception {
 		SpecificationMapper mapper = executeMapping(STARTFILE, FOLDER + "containerDynamicCheckFail.skill");
@@ -56,6 +74,11 @@ class CastAll extends CommonSpecificationMappingTest {
 		compareFailingFields(mapper, expectedFailFields);
 	}
 	
+	/**
+	 * Failing cast from groundtype to usertype.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	public void groundtypeToUsertypeFail() throws Exception {
 		SpecificationMapper mapper = executeMapping(STARTFILE, FOLDER + "groundtypeToUsertypeFail.skill");
@@ -70,6 +93,11 @@ class CastAll extends CommonSpecificationMappingTest {
 		compareFailingFields(mapper, expectedFailFields);
 	}
 	
+	/**
+	 * Map cast fails because of key.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	public void mapKeyFail() throws Exception {
 		SpecificationMapper mapper = executeMapping(STARTFILE, FOLDER + "mapKeyFail.skill");
@@ -81,6 +109,11 @@ class CastAll extends CommonSpecificationMappingTest {
 		compareFailingFields(mapper, expectedFailFields);
 	}
 	
+	/**
+	 * Map cast fails because of value.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	public void mapValueFail() throws Exception {
 		SpecificationMapper mapper = executeMapping(STARTFILE, FOLDER + "mapKeyFail.skill");

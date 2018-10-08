@@ -18,6 +18,9 @@ import org.junit.jupiter.api.TestFactory;
 public abstract class CommonGcTest extends CommonTest {
 	/**
 	 * Define a test case with this class.
+	 * A Test definition consists of a testname, a file to execute the garbage collection on, a file with
+	 * the expected state after the collection and a set of roots.
+	 * Additionaly one could keep all collections by setting the flag.
 	 * 
 	 * @author olibroe
 	 *
@@ -46,10 +49,14 @@ public abstract class CommonGcTest extends CommonTest {
 		}
 	}
 	
+	// holds all defined tests
 	protected List<GcTestDefinition> gcTestDefinitions = new ArrayList<>();
 	
 	/**
 	 * Execute defined test cases.
+	 * This is done by setting the args for the Command line interface.
+	 * In this method only the arguments that are made for gc are set. All other arguments are set in
+	 * executeCliTest(...).
 	 * 
 	 * @return
 	 * @throws Exception

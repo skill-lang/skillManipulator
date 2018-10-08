@@ -13,10 +13,18 @@ class RestrictionsAll extends CommonSpecificationMappingTest {
 
 	private static final String FOLDER = "src/test/resources/restrictions/";
 
+	/**
+	 * Define test cases in constructor.
+	 */
 	protected RestrictionsAll() {
 		super(FOLDER, FOLDER + "restrictionsAll.sf");
 	}
 
+	/**
+	 * This test checks the serialization and deserialization of all restrictions.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	void testInOut() throws Exception {
 		Path path = tmpFile("restrictions.in.out");

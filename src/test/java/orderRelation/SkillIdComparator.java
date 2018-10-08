@@ -4,6 +4,13 @@ import de.ust.skill.common.java.internal.FieldDeclaration;
 import de.ust.skill.common.java.internal.SkillObject;
 import de.ust.skill.manipulator.orderRelation.SkillObjectComparator;
 
+/**
+ * SkillObjectComparator that sorts SkillObjects after the values of the given field.
+ * The given field references SkillObjects and the comparison is done by comparing SkillIds.
+ * 
+ * @author olibroe
+ *
+ */
 public class SkillIdComparator extends SkillObjectComparator {
 	private final FieldDeclaration<?, ?> f;
 	

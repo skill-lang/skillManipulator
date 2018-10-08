@@ -13,10 +13,18 @@ class UsertypeCast extends CommonSpecificationMappingTest {
 	private static final String FOLDER = "src/test/resources/specificationMapper/usertypeCast/";
 	private static final String STARTFILE = FOLDER + "subtypes.sf";
 
+	/**
+	 * Define test cases in constructor.
+	 */
 	protected UsertypeCast() {
 		super(FOLDER, STARTFILE);
 	}
 	
+	/**
+	 * Failing cast from usertype to groundtype.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	public void castToGroundtypes() throws Exception {
 		SpecificationMapper mapper = executeMapping(STARTFILE, FOLDER + "castToGroundtypes.skill");
@@ -29,6 +37,11 @@ class UsertypeCast extends CommonSpecificationMappingTest {
 		compareFailingFields(mapper, expectedFailFields);
 	}
 	
+	/**
+	 * Failing downcast from B to D.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	public void downcastToD2() throws Exception {
 		SpecificationMapper mapper = executeMapping(STARTFILE, FOLDER + "downcastToD2.skill");
@@ -39,6 +52,11 @@ class UsertypeCast extends CommonSpecificationMappingTest {
 		compareFailingFields(mapper, expectedFailFields);
 	}
 	
+	/**
+	 * Failing downcasts.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	public void failingDowncast() throws Exception {
 		SpecificationMapper mapper = executeMapping(STARTFILE, FOLDER + "failingDowncast.skill");

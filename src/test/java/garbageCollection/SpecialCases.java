@@ -20,6 +20,9 @@ class SpecialCases extends CommonGcTest{
 	private final static String folder = "src/test/resources/gcSpecialCases/";
 	private final static String startFile = folder + "specification.sf";
 	
+	/**
+	 * Define test cases in constructor.
+	 */
 	protected SpecialCases() {
 		gcTestDefinitions.add(new GcTestDefinition("test_RootT", startFile,
 				folder + "result.sf", "t"));
@@ -27,7 +30,12 @@ class SpecialCases extends CommonGcTest{
 				folder + "specification.sf", "t", true));
 	}
 
-	
+	/**
+	 * Root is deleted, then GC is executed.
+	 * Empty result file is expected.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	void testRootPreviouslyDeleted() throws Exception {
 		Path path = tmpFile("simple.root.deleted");
@@ -55,6 +63,11 @@ class SpecialCases extends CommonGcTest{
         SkillfileComparator.compareSkillFiles(sfExpected, sfActual);
 	}
 	
+	/**
+	 * Test command line options.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	void testCliGcOptions_1() throws Exception {
 		List<String> args = new ArrayList<>();
@@ -68,6 +81,11 @@ class SpecialCases extends CommonGcTest{
 		executeCliTest(startFile, dryRunExpected, args);
 	}
 	
+	/**
+	 * Test command line options.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	void testCliGcOptions_2() throws Exception {
 		List<String> args = new ArrayList<>();

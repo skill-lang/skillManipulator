@@ -5,6 +5,9 @@ import common.CommonGcTest;
 class EmptyTypePoolTest extends CommonGcTest{
 	private final static String folder = "src/test/resources/emptyTypePool/";
 	
+	/**
+	 * Define test cases in constructor.
+	 */
 	protected EmptyTypePoolTest() {
 		gcTestDefinitions.add(new GcTestDefinition("test_reference_RootT", folder + "reference/reference.sf",
 				folder + "reference/result.sf", "t"));

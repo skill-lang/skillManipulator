@@ -13,10 +13,18 @@ class NumberCastFail extends CommonSpecificationMappingTest {
 	private static final String FOLDER = "src/test/resources/specificationMapper/numberCastFail/";
 	private static final String STARTFILE = FOLDER + "specification.sf";
 
+	/**
+	 * Define test cases in constructor.
+	 */
 	protected NumberCastFail() {
 		super(FOLDER, STARTFILE);
 	}
 	
+	/**
+	 * Casting to byte fails.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	public void byteFail() throws Exception {
 		SpecificationMapper mapper = executeMapping(STARTFILE, FOLDER + "byteFail.skill");
@@ -33,6 +41,11 @@ class NumberCastFail extends CommonSpecificationMappingTest {
 		compareFailingFields(mapper, expectedFailFields);
 	}
 	
+	/**
+	 * Casting to double fails.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	public void doubleFail() throws Exception {
 		SpecificationMapper mapper = executeMapping(STARTFILE, FOLDER + "doubleFail.skill");
@@ -44,6 +57,11 @@ class NumberCastFail extends CommonSpecificationMappingTest {
 		compareFailingFields(mapper, expectedFailFields);
 	}
 	
+	/**
+	 * Casting to float fails.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	public void floatFail() throws Exception {
 		SpecificationMapper mapper = executeMapping(STARTFILE, FOLDER + "floatFail.skill");
@@ -55,6 +73,11 @@ class NumberCastFail extends CommonSpecificationMappingTest {
 		compareFailingFields(mapper, expectedFailFields);
 	}
 	
+	/**
+	 * Casting to int fails.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	public void intFail() throws Exception {
 		SpecificationMapper mapper = executeMapping(STARTFILE, FOLDER + "intFail.skill");
@@ -71,6 +94,11 @@ class NumberCastFail extends CommonSpecificationMappingTest {
 		compareFailingFields(mapper, expectedFailFields);
 	}
 	
+	/**
+	 * Casting to long fails.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	public void longFail() throws Exception {
 		SpecificationMapper mapper = executeMapping(STARTFILE, FOLDER + "longFail.skill");
@@ -85,6 +113,11 @@ class NumberCastFail extends CommonSpecificationMappingTest {
 		compareFailingFields(mapper, expectedFailFields);
 	}
 	
+	/**
+	 * Casting to short fails.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	public void shortFail() throws Exception {
 		SpecificationMapper mapper = executeMapping(STARTFILE, FOLDER + "shortFail.skill");
