@@ -90,7 +90,7 @@ public class CLI {
 			try {
 				sf.changePath(outpath);
 			} catch (IOException e) {
-				System.out.println("Error while creating outfile.");
+				System.out.println("Error while creating outfile: " + outpath);
 			}
     	if(!line.hasOption("d")) sf.close();
 	}
@@ -101,11 +101,12 @@ public class CLI {
 			return;
 		}
 		
-		TypeContext tc = Parser.process(new File(line.getOptionValue("spec")), false, false, false, false);
+		TypeContext tc;
 		try {
+			tc = Parser.process(new File(line.getOptionValue("spec")), false, false, false, false);
 			tc = tc.removeSpecialDeclarations();
 		} catch (de.ust.skill.ir.ParseException e) {
-			System.out.println("Error while parsing specification file.");
+			System.out.println("Error while parsing specification file: " + e.getMessage());
 			return;
 		}
 		
@@ -115,24 +116,26 @@ public class CLI {
 		try {
 			if(line.hasOption("map")) {
 				String mappingFile = line.getOptionValue("map");
-				newSf = mapper.map(tc, sf, outpath, mappingFile);
+				try {
+					newSf = mapper.map(tc, sf, outpath, mappingFile);
+				} catch (FileNotFoundException e) {
+					System.out.println("Mapping file not found: " + mappingFile);
+					return;
+				} catch (de.ust.skill.manipulator.specificationMapping.mappingfileParser.ParseException e) {
+					System.out.println("Error while parsing mapping file. Message is: " + e.getMessage());
+					return;
+				} 
 			} else {
 				newSf = mapper.map(tc, sf, outpath);
 			}
-		} catch (FileNotFoundException e) {
-			System.out.println("Mapping file not found");
-			return;
 		} catch (IOException e) {
-			System.out.println("Error while creating new Skillfile.");
+			System.out.println("IOerror while creating new Skillfile: " + outpath);
 			return;
 		} catch (InterruptedException e) {
-			System.out.println("Error while transferring objects.");
-			return;
-		} catch (de.ust.skill.manipulator.specificationMapping.mappingfileParser.ParseException e) {
-			System.out.println("Error while parsing mapping file.");
+			System.out.println("Unexpected error while transferring objects. Thread was interrupted.");
 			return;
 		} catch (SkillException e) {
-			System.out.println("Restriction violated: " + e.getMessage());
+			System.out.println(e.getMessage());
 			return;
 		}
 		
@@ -293,7 +296,7 @@ public class CLI {
 			try {
 				sf.changePath(outpath);
 			} catch (IOException e) {
-				System.out.println("Error while creating outfile.");
+				System.out.println("Error while creating outfile: " + outpath);
 			}
     	if(!line.hasOption("d")) sf.close();
 	}

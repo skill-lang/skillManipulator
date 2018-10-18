@@ -1,0 +1,6 @@
+#! test
+
+S {
+	@default(false)
+	bool b;
+}
