@@ -103,7 +103,7 @@ public class CLI {
 		
 		TypeContext tc;
 		try {
-			tc = Parser.process(new File(line.getOptionValue("spec")), false, false, false, false);
+			tc = Parser.process(new File(line.getOptionValue("spec")), false, true, true, false);
 			tc = tc.removeSpecialDeclarations();
 		} catch (de.ust.skill.ir.ParseException e) {
 			System.out.println("Error while parsing specification file: " + e.getMessage());
